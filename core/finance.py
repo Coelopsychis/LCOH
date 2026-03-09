@@ -4,6 +4,7 @@ import numpy as np
 
 from core.models import ModelInputs
 from core.simulation import compute_operation_kpis
+from core.constants import KWH_PER_KG_H2
 
 
 def annuity_factor(rate: float, years: int) -> float:
@@ -86,7 +87,7 @@ def compute_lcoh(inputs: ModelInputs, dispatch) -> dict:
     annual_h2_kg = op_kpis["annual_h2_kg"]
     lcoh_eur_per_kg = annual_costs / annual_h2_kg if annual_h2_kg > 0 else np.nan
     lcoh_ct_per_kwh = (
-        lcoh_eur_per_kg * inputs.system.kwh_h2_per_kg
+        lcoh_eur_per_kg * KWH_PER_KG_H2
         if np.isfinite(lcoh_eur_per_kg)
         else np.nan
     )

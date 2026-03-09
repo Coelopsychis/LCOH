@@ -13,7 +13,6 @@ class SystemInputs:
     min_load_fraction: float = 0.20
 
     avg_efficiency_h2_per_el: float = 0.70
-    kwh_h2_per_kg: float = 39.4
 
     stack_lifetime_years: int = 8
     degradation_per_year: float = 0.0

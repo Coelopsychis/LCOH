@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+from widgets import percent_slider
+
 from core.models import (
     SystemInputs,
     CapexInputs,
@@ -18,6 +20,14 @@ from core.timeseries import make_demo_timeseries, validate_timeseries
 from core.simulation import build_dispatch
 from core.finance import compute_lcoh
 
+import locale
+
+locale.setlocale(locale.LC_ALL, "de_DE.UTF-8")
+
+def de_number(value, decimals=2):
+    if value is None:
+        return "-"
+    return f"{value:,.{decimals}f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 st.set_page_config(page_title="Electrolyzer LCOH Demo", layout="wide")
 
@@ -41,9 +51,8 @@ def init_ui_state() -> None:
     st.session_state.project_lifetime_years = s.project_lifetime_years
     st.session_state.electrolyzer_power_kw = s.electrolyzer_power_kw
     st.session_state.system_power_kw = s.system_power_kw
-    st.session_state.min_load_fraction = s.min_load_fraction
-    st.session_state.avg_efficiency_h2_per_el = s.avg_efficiency_h2_per_el
-    st.session_state.kwh_h2_per_kg = s.kwh_h2_per_kg
+    st.session_state.min_load_fraction = s.min_load_fraction * 100
+    st.session_state.avg_efficiency_h2_per_el = s.avg_efficiency_h2_per_el * 100
     st.session_state.stack_lifetime_years = s.stack_lifetime_years
     st.session_state.degradation_per_year = s.degradation_per_year
 
@@ -85,9 +94,8 @@ def build_model_inputs_from_ui() -> ModelInputs:
         project_lifetime_years=int(st.session_state.project_lifetime_years),
         electrolyzer_power_kw=float(st.session_state.electrolyzer_power_kw),
         system_power_kw=float(st.session_state.system_power_kw),
-        min_load_fraction=float(st.session_state.min_load_fraction),
-        avg_efficiency_h2_per_el=float(st.session_state.avg_efficiency_h2_per_el),
-        kwh_h2_per_kg=float(st.session_state.kwh_h2_per_kg),
+        min_load_fraction=float(st.session_state.min_load_fraction) / 100,
+        avg_efficiency_h2_per_el=float(st.session_state.avg_efficiency_h2_per_el) / 100,
         stack_lifetime_years=int(st.session_state.stack_lifetime_years),
         degradation_per_year=float(st.session_state.degradation_per_year),
     )
@@ -131,8 +139,6 @@ init_ui_state()
 # Sidebar
 # ============================================================
 
-st.sidebar.title("Berechnung")
-st.sidebar.caption("Modelllauf und Hauptkennzahlen")
 
 if st.sidebar.button("Berechnung starten", type="primary", use_container_width=True):
     try:
@@ -145,30 +151,29 @@ if st.sidebar.button("Berechnung starten", type="primary", use_container_width=T
             "dispatch": dispatch_df,
             "results": results,
         }
-        st.sidebar.success("Berechnung erfolgreich")
     except Exception as e:
         st.sidebar.error(f"Fehler: {e}")
 
+st.sidebar.title("Key Performance Indicators")
 st.sidebar.divider()
 
 if st.session_state.result_bundle is None:
     st.sidebar.info("Noch keine Ergebnisse verfügbar.")
 else:
     r = st.session_state.result_bundle["results"]
-    st.sidebar.metric("LCOH [€/kg]", f"{r['lcoh_eur_per_kg']:.2f}")
-    st.sidebar.metric("LCOH [ct/kWh]", f"{r['lcoh_ct_per_kwh']:.2f}")
-    st.sidebar.metric("H₂-Produktion [kg/a]", f"{r['annual_h2_kg']:,.0f}")
-    st.sidebar.metric("Ely-Strom [MWh/a]", f"{r['annual_ely_mwh']:,.0f}")
+    st.sidebar.metric("LCOH [€/kg]", de_number(r["lcoh_eur_per_kg"], 2))
+    st.sidebar.metric("LCOH [ct/kWh]", de_number(r["lcoh_ct_per_kwh"], 2))
+    st.sidebar.metric("H₂-Produktion [kg/a]", de_number(r["annual_h2_kg"], 0))
+    st.sidebar.metric("Ely-Stromverbrauch [MWh/a]", de_number(r["annual_ely_mwh"], 0))
 
 
 # ============================================================
 # Hauptlayout
 # ============================================================
 
-st.title("Electrolyzer LCOH Demo")
+st.title("Berechnungstool LCOH")
 st.caption(
-    "Basisversion eines techno-ökonomischen Rechners für Wasserstoffelektrolyseure "
-    "mit stündlicher Simulation."
+    "Tool zur Berechnung von Wasserstoffgestehungskosten (Levelised Cost of Hydrogen)"
 )
 
 tabs = st.tabs(
@@ -189,7 +194,7 @@ tabs = st.tabs(
 with tabs[0]:
     st.subheader("Systemparameter")
 
-    with st.expander("Projekt & Leistung", expanded=True):
+    with st.expander("Allgemeine Projektparameter", expanded=True):
         c1, c2, c3 = st.columns(3)
 
         with c1:
@@ -200,6 +205,8 @@ with tabs[0]:
                 step=1,
                 key="commissioning_year",
             )
+
+        with c2:
             st.number_input(
                 "Projektlaufzeit [a]",
                 min_value=1,
@@ -208,7 +215,10 @@ with tabs[0]:
                 key="project_lifetime_years",
             )
 
-        with c2:
+    with st.expander("Leistungsdaten", expanded=True):
+        c1, c2, c3 = st.columns(3)
+
+        with c1:
             st.number_input(
                 "Elektrolyseurleistung [kW]",
                 min_value=1.0,
@@ -216,6 +226,8 @@ with tabs[0]:
                 step=100.0,
                 key="electrolyzer_power_kw",
             )
+
+        with c2:
             st.number_input(
                 "Systemleistung [kW]",
                 min_value=1.0,
@@ -225,36 +237,21 @@ with tabs[0]:
             )
 
         with c3:
-            st.slider(
-                "Mindestlast [-]",
-                min_value=0.0,
-                max_value=1.0,
-                step=0.01,
+            percent_slider(
+                "Mindestlast",
                 key="min_load_fraction",
             )
 
-    with st.expander("Wirkungsgrad & Wasserstoff", expanded=True):
+    with st.expander("Wirkungsgrad & Degradation", expanded=True):
         c1, c2, c3 = st.columns(3)
 
         with c1:
-            st.slider(
-                "Mittlere Effizienz η [-]",
-                min_value=0.0,
-                max_value=1.0,
-                step=0.01,
+            percent_slider(
+                "Mittlere Effizienz η",
                 key="avg_efficiency_h2_per_el",
             )
 
         with c2:
-            st.number_input(
-                "Energieinhalt H₂ [kWh/kg]",
-                min_value=1.0,
-                max_value=100.0,
-                step=0.1,
-                key="kwh_h2_per_kg",
-            )
-
-        with c3:
             st.number_input(
                 "Stack-Lebensdauer [a]",
                 min_value=1,
@@ -262,12 +259,10 @@ with tabs[0]:
                 step=1,
                 key="stack_lifetime_years",
             )
-            st.number_input(
-                "Degradation pro Jahr [-]",
-                min_value=0.0,
-                max_value=1.0,
-                step=0.001,
-                format="%.3f",
+
+        with c3:
+            percent_slider(
+                "Degradation pro Jahr",
                 key="degradation_per_year",
             )
 
@@ -479,7 +474,8 @@ with tabs[3]:
                     st.error(f"CSV konnte nicht eingelesen werden: {e}")
 
     with st.expander("Vorschau der ersten 24 Stunden", expanded=False):
-        st.dataframe(st.session_state.timeseries_df.head(24), use_container_width=True, height=260)
+        df = st.session_state.timeseries_df.applymap(lambda x: de_number(x, 2) if isinstance(x, (int, float)) else x)
+        st.dataframe(df.head(24), use_container_width=True, height=260)
 
 
 # ============================================================

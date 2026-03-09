@@ -5,6 +5,7 @@ import pandas as pd
 
 from core.models import ModelInputs
 from core.timeseries import validate_timeseries
+from core.constants import KWH_PER_KG_H2
 
 
 def build_dispatch(inputs: ModelInputs, ts: pd.DataFrame) -> pd.DataFrame:
@@ -74,7 +75,7 @@ def build_dispatch(inputs: ModelInputs, ts: pd.DataFrame) -> pd.DataFrame:
 def compute_operation_kpis(inputs: ModelInputs, dispatch: pd.DataFrame) -> dict:
     annual_ely_kwh = float(dispatch["ely_consumption_kwh"].sum())
     annual_h2_kwh = annual_ely_kwh * inputs.system.avg_efficiency_h2_per_el
-    annual_h2_kg = annual_h2_kwh / inputs.system.kwh_h2_per_kg if inputs.system.kwh_h2_per_kg > 0 else 0.0
+    annual_h2_kg = annual_h2_kwh / KWH_PER_KG_H2
 
     utilization = dispatch["utilization"].to_numpy()
     avg_utilization = float(utilization.mean())
