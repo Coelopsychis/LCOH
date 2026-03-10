@@ -20,24 +20,63 @@ class SystemInputs:
 
 @dataclass
 class CapexInputs:
-    electrolyzer_specific_eur_per_kw: float = 1_000.0
-    bop_specific_eur_per_kw: float = 250.0
-    infrastructure_specific_eur_per_kw: float = 150.0
-    development_share: float = 0.05
+    # Allgemeine CAPEX
+    epc_eur_per_kw: float = 300.0
+    bop_eur_per_kw: float = 250.0
+    hochbau_eur_per_kw: float = 100.0
+    tiefbau_eur_per_kw: float = 80.0
+    individual_specific_eur_per_kw: float = 0.0
+    individual_fixed_eur: float = 0.0
 
-    stack_replacement_specific_eur_per_kw: float = 250.0
+    # Abwärme
+    waste_heat_enabled: bool = False
+    waste_heat_system_eur_per_kw: float = 0.0
 
+    # Sauerstoff
+    oxygen_enabled: bool = False
+    oxygen_system_eur_per_kw: float = 0.0
+
+    # H2-Aufbereitung / Verdichtung
+    compression_enabled: bool = False
+    compressor_system_eur_per_kw: float = 0.0
+
+    # Batteriesystem
+    battery_enabled: bool = False
+    battery_capacity_factor_kwh_per_kw: float = 0.0
+    battery_power_kw: float = 0.0
+    battery_invest_eur_per_kwh: float = 0.0
+
+    # Finanzierung
     discount_rate: float = 0.08
     debt_interest_rate: float = 0.05
     equity_share: float = 0.30
+    stack_replacement_specific_eur_per_kw: float = 250.0
 
 
 @dataclass
 class OpexInputs:
-    maintenance_share_of_capex: float = 0.03
-    personnel_eur_per_year: float = 300_000.0
-    other_fixed_opex_eur_per_year: float = 100_000.0
-    water_eur_per_kg_h2: float = 0.05
+    # Wartung & Instandhaltung
+    maintenance_share_of_capex: float = 0.005
+    maintenance_escalation_per_year: float = 0.025
+
+    # Personalkosten
+    personnel_eur_per_year: float = 85_000.0
+    personnel_escalation_per_year: float = 0.02
+
+    # Rückstellungen
+    reserve_remaining_plant_share_of_capex: float = 0.01
+    reserve_decommissioning_share_of_capex: float = 0.0025
+    reserve_escalation_per_year: float = 0.01
+
+    # Wasser
+    freshwater_price_eur_per_m3: float = 4.0
+    freshwater_treatment_price_eur_per_m3: float = 5.0
+    wastewater_price_eur_per_m3: float = 6.5
+    water_escalation_per_year: float = 0.01
+
+    # Individuelle OPEX
+    individual_opex_share_of_capex: float = 0.005
+    individual_opex_escalation_per_year: float = 0.01
 
 
 @dataclass
