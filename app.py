@@ -42,6 +42,8 @@ from core.reporting import (
     positive_cost_distribution,
     revenue_distribution,
     utilization_duration_curve,
+    complete_result_overview,
+    json_compatible,
 )
 
 import plotly.graph_objects as go
@@ -2431,7 +2433,7 @@ with tabs[5]:
         # ----------------------------------------------------
         # Kostenstruktur
         # ----------------------------------------------------
-        with st.expander("Kostenstruktur", expanded=True):
+        with st.expander("Kostenstruktur", expanded=False):
             c1, c2, c3, c4 = st.columns(4)
 
             with c1:
@@ -2471,7 +2473,7 @@ with tabs[5]:
         # ----------------------------------------------------
         # Förderungen & Strompreiskompensation
         # ----------------------------------------------------
-        with st.expander("Förderungen & Strompreiskompensation", expanded=True):
+        with st.expander("Förderungen & Strompreiskompensation", expanded=False):
             c1, c2, c3, c4 = st.columns(4)
             c1.metric("CAPEX vor Förderung", f"{fmt_int_de(results['gross_capex_eur'])} €")
             c2.metric("CAPEX-Förderung gesamt", f"{fmt_int_de(results['capex_subsidy_total_eur'])} €")
@@ -2613,7 +2615,7 @@ with tabs[5]:
             c5.metric("Volllaststunden (gezählt)", f"{fmt_int_de(results['full_load_hours_count'])} h")
             c6.metric("Ø Wirkungsgrad inkl. Degradation", fmt_pct_de(results["average_efficiency_h2_per_el"], 1))
             c7.metric("Wasserbedarf", f"{fmt_de(results['annual_water_demand_m3'], 0)} m³/a")
-            c8.metric("Wasserkosten gesamt", f"{fmt_de(results['water_cost_per_m3'], 2)} €/m³")
+            c8.metric("Wasserkosten spezifisch", f"{fmt_de(results['water_cost_per_m3'], 2)} €/m³")
 
         # ----------------------------------------------------
         # Aufbereitung, Nebenprodukte & Batterie
@@ -2838,48 +2840,87 @@ with tabs[5]:
             render_plotly(cost_breakdown_fig)
 
         # ----------------------------------------------------
-        # Ergebnisübersicht als Tabelle
+        # Vollständige Ergebnisübersicht als Tabelle
         # ----------------------------------------------------
+        derived_results = {
+            "lcoh_before_operating_relief_eur_per_kg": gross_running_lcoh,
+            "operating_relief_eur_per_year": operating_relief,
+            "oxygen_and_waste_heat_revenue_eur_per_year": (
+                results["oxygen_revenue_eur_per_year"]
+                + results["waste_heat_revenue_eur_per_year"]
+            ),
+        }
+        overview_raw_df = complete_result_overview(results, derived=derived_results)
+
+        def format_overview_value(row) -> str:
+            value = row["Wert"]
+            unit = row["Einheit"]
+            if value is None:
+                return "-"
+            if isinstance(value, str):
+                if row["Schlüssel"] == "opex_calculation_mode":
+                    return "Pauschal" if value == "lump_sum" else "Detailliert"
+                return value
+            if isinstance(value, (bool, np.bool_)):
+                return "Ja" if value else "Nein"
+            try:
+                numeric = float(value)
+            except (TypeError, ValueError):
+                return str(value)
+            if not np.isfinite(numeric):
+                return "-"
+
+            if unit == "%":
+                decimals = 2
+            elif unit in {"€/kg H₂", "ct/kWh H₂"}:
+                decimals = 3
+            elif unit in {"€/MWh", "€/t CO₂", "€/t", "€/kW", "kWh/t"}:
+                decimals = 2 if abs(numeric) < 1000 else 1
+            elif unit in {"–"}:
+                decimals = 3 if abs(numeric) < 10 else 2
+            elif abs(numeric) >= 1000:
+                decimals = 0
+            elif abs(numeric) >= 100:
+                decimals = 1
+            else:
+                decimals = 2
+            return fmt_de(numeric, decimals)
+
+        overview_display_df = overview_raw_df[["Kategorie", "Kennzahl", "Wert", "Einheit"]].copy()
+        overview_display_df["Wert"] = overview_raw_df.apply(format_overview_value, axis=1)
+
         with st.expander("Ergebnisübersicht als Tabelle", expanded=False):
-            summary_df = pd.DataFrame(
-                [
-                    ["LCOH", f"{fmt_de(results['lcoh_eur_per_kg'], 2)} €/kg"],
-                    ["LCOH", f"{fmt_de(results['lcoh_ct_per_kwh'], 2)} ct/kWh"],
-                    ["Wasserstoffproduktion", f"{fmt_int_de(results['annual_h2_kg'])} kg/a"],
-                    ["Ely-Stromverbrauch", f"{fmt_int_de(results['annual_ely_mwh'])} MWh/a"],
-                    ["Durchschnittliche Auslastung", fmt_pct_de(results["avg_utilization"], 1)],
-                    ["Betriebsstunden", f"{fmt_int_de(results['operating_hours'])} h"],
-                    ["Äquivalente Volllaststunden", f"{fmt_int_de(results['equivalent_full_load_hours'])} h/a"],
-                    ["Finanzierung (FK + EK)", f"{fmt_int_de(results['financing_eur_per_year'])} €/a"],
-                    ["OPEX gesamt", f"{fmt_int_de(results['total_opex_eur_per_year'])} €/a"],
-                    ["CAPEX-Förderung gesamt", f"{fmt_int_de(results['capex_subsidy_total_eur'])} €"],
-                    ["Strompreisförderung", f"{fmt_int_de(results['electricity_subsidy_eur_per_year'])} €/a"],
-                    ["Strompreiskompensation", f"{fmt_int_de(results['spk_revenue_eur_per_year'])} €/a"],
-                    ["Stromverkauf", f"{fmt_int_de(results['power_sale_revenue_eur_per_year'])} €/a"],
-                    ["Regelenergie", f"{fmt_int_de(results['balancing_energy_revenue_eur_per_year'])} €/a"],
-                    ["Sonstige Erlöse", f"{fmt_int_de(results['other_revenue_eur_per_year'])} €/a"],
-                    ["Weitere Einnahmen Total", f"{fmt_int_de(results['total_other_revenues_eur_per_year'])} €/a"],
-                    ["Gesamtkosten jährlich", f"{fmt_int_de(results['annual_costs_eur_per_year'])} €/a"],
-                ],
-                columns=["Kennzahl", "Wert"],
+            st.caption(
+                "Die Tabelle enthält sämtliche skalaren Kennzahlen des Rechenmodells sowie die "
+                "zusätzlich auf der Ergebnisseite abgeleiteten KPIs. Damit sind auch Werte aus "
+                "den Detail-Expandern und Diagramm-Aggregaten zentral auffindbar."
             )
-            st.dataframe(summary_df, use_container_width=True, hide_index=True)
+            st.dataframe(overview_display_df, use_container_width=True, hide_index=True)
 
         # ----------------------------------------------------
         # Export
         # ----------------------------------------------------
         with st.expander("Export", expanded=False):
-            export_json = json.dumps(
-                {
+            export_payload = {
+                "schema_version": 2,
+                "inputs": {
                     "system": asdict(model_inputs.system),
                     "capex": asdict(model_inputs.capex),
                     "opex": asdict(model_inputs.opex),
                     "power": asdict(model_inputs.power),
+                    "electricity_costs": asdict(model_inputs.electricity_costs),
                     "revenue": asdict(model_inputs.revenue),
                     "funding": asdict(model_inputs.funding),
-                    "results": results,
                 },
+                "results": results,
+                "derived_results": derived_results,
+                "result_overview": overview_raw_df.to_dict(orient="records"),
+            }
+            export_json = json.dumps(
+                json_compatible(export_payload),
+                ensure_ascii=False,
                 indent=2,
+                allow_nan=False,
             ).encode("utf-8")
 
             st.download_button(
@@ -2889,11 +2930,17 @@ with tabs[5]:
                 "application/json",
             )
 
-            export_csv = pd.DataFrame([results]).to_csv(index=False, sep=";", decimal=",").encode("utf-8")
+            # Long-form CSV: one KPI per row, including category, unit, technical
+            # key and raw model value. This is substantially more complete and
+            # easier to process than the previous single-row results dict export.
+            export_csv_df = overview_raw_df.copy()
+            export_csv = export_csv_df.to_csv(
+                index=False, sep=";", decimal=",", encoding="utf-8"
+            ).encode("utf-8")
             st.download_button(
-                "KPIs als CSV herunterladen",
+                "Ergebnisse als CSV herunterladen",
                 export_csv,
-                "lcoh_kpis.csv",
+                "lcoh_results.csv",
                 "text/csv",
             )
 
