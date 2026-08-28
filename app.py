@@ -84,19 +84,39 @@ def render_plotly(fig: go.Figure) -> None:
 # ============================================================
 
 # Sensitivitäts-UI: Defaults kommen zentral aus core.sensitivity.
+#
+# Die Versionsnummer ist absichtlich getrennt vom allgemeinen ``ui_initialized``.
+# Streamlit merkt sich Widget-Werte anhand ihres Keys auch über Source-Reruns hinweg.
+# Eine neue Version erzwingt deshalb genau einmal die gewünschten Defaults und
+# verhindert, dass alte Slider-Zustände (z. B. 5 % / 5 Punkte) weiterleben.
+SENSITIVITY_UI_STATE_VERSION = 2
+SENSITIVITY_RANGE_WIDGET_KEY = "sensitivity_range_percent_widget_v2"
+SENSITIVITY_POINTS_WIDGET_KEY = "sensitivity_points_widget_v2"
+
 
 def ensure_sensitivity_ui_state() -> None:
-    """Keep sensitivity widgets and calculations in sync across app updates.
+    """Migrate and validate the sensitivity UI state.
 
-    Streamlit sessions can survive a source-code update. Older sessions may
-    therefore already contain ``ui_initialized`` while the sensitivity keys
-    introduced later are still missing. Without this migration, sliders fall
-    back to their minimum values although the analysis was designed for the
-    Excel defaults.
+    The migration runs once per sensitivity-UI version. This is stronger than
+    merely checking whether a value is valid: an old value of 5 is technically
+    valid, but it must not override the new intended initial defaults of
+    ±30 % and 13 points after updating the app.
     """
     valid_ranges = set(range(5, 81, 5))
     valid_points = set(range(5, 32, 2))
     valid_parameters = {p.key for p in EXCEL_SENSITIVITY_PARAMETERS}
+
+    if st.session_state.get("_sensitivity_ui_state_version") != SENSITIVITY_UI_STATE_VERSION:
+        st.session_state.sensitivity_range_percent = DEFAULT_SENSITIVITY_RANGE_PERCENT
+        st.session_state.sensitivity_points = DEFAULT_SENSITIVITY_POINTS
+        st.session_state.sensitivity_parameter = DEFAULT_SENSITIVITY_PARAMETER
+
+        # Remove values belonging to the new version in case a partially run
+        # session already created them. The widgets will then initialize from
+        # the canonical defaults below.
+        st.session_state.pop(SENSITIVITY_RANGE_WIDGET_KEY, None)
+        st.session_state.pop(SENSITIVITY_POINTS_WIDGET_KEY, None)
+        st.session_state._sensitivity_ui_state_version = SENSITIVITY_UI_STATE_VERSION
 
     if st.session_state.get("sensitivity_range_percent") not in valid_ranges:
         st.session_state.sensitivity_range_percent = DEFAULT_SENSITIVITY_RANGE_PERCENT
@@ -2716,25 +2736,29 @@ with tabs[6]:
                 "Variationsbereich ± [%]",
                 min_value=5,
                 max_value=80,
+                value=int(st.session_state.sensitivity_range_percent),
                 step=5,
-                key="sensitivity_range_percent",
+                key=SENSITIVITY_RANGE_WIDGET_KEY,
                 help=(
                     "Standard: ±30 % wie im Excel-Sensitivitätsblatt. "
                     "Der gewählte Wert wird unmittelbar für Tornado-Diagramm, Tabelle und Detailkurve verwendet."
                 ),
             )
+            st.session_state.sensitivity_range_percent = sensitivity_range_percent
         with c2:
             sensitivity_points = st.slider(
                 "Punkte der Detailkurve",
                 min_value=5,
                 max_value=31,
+                value=int(st.session_state.sensitivity_points),
                 step=2,
-                key="sensitivity_points",
+                key=SENSITIVITY_POINTS_WIDGET_KEY,
                 help=(
                     "Standard: 13 Punkte. Bei ±30 % entstehen dadurch 5-%-Schritte von −30 % bis +30 % "
                     "einschließlich des Basisfalls bei 0 %."
                 ),
             )
+            st.session_state.sensitivity_points = sensitivity_points
         with c3:
             label_to_key = {p.label: p.key for p in EXCEL_SENSITIVITY_PARAMETERS}
             key_to_label = {p.key: p.label for p in EXCEL_SENSITIVITY_PARAMETERS}
