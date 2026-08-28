@@ -31,6 +31,9 @@ from core.finance import compute_lcoh
 from core.sensitivity import (
     EXCEL_SENSITIVITY_PARAMETERS,
     PARAMETER_BY_KEY,
+    DEFAULT_SENSITIVITY_RANGE_PERCENT,
+    DEFAULT_SENSITIVITY_POINTS,
+    DEFAULT_SENSITIVITY_PARAMETER,
     compute_sensitivity_curve,
     compute_tornado,
 )
@@ -80,7 +83,34 @@ def render_plotly(fig: go.Figure) -> None:
 # Session-State Initialisierung
 # ============================================================
 
+# Sensitivitäts-UI: Defaults kommen zentral aus core.sensitivity.
+
+def ensure_sensitivity_ui_state() -> None:
+    """Keep sensitivity widgets and calculations in sync across app updates.
+
+    Streamlit sessions can survive a source-code update. Older sessions may
+    therefore already contain ``ui_initialized`` while the sensitivity keys
+    introduced later are still missing. Without this migration, sliders fall
+    back to their minimum values although the analysis was designed for the
+    Excel defaults.
+    """
+    valid_ranges = set(range(5, 81, 5))
+    valid_points = set(range(5, 32, 2))
+    valid_parameters = {p.key for p in EXCEL_SENSITIVITY_PARAMETERS}
+
+    if st.session_state.get("sensitivity_range_percent") not in valid_ranges:
+        st.session_state.sensitivity_range_percent = DEFAULT_SENSITIVITY_RANGE_PERCENT
+    if st.session_state.get("sensitivity_points") not in valid_points:
+        st.session_state.sensitivity_points = DEFAULT_SENSITIVITY_POINTS
+    if st.session_state.get("sensitivity_parameter") not in valid_parameters:
+        st.session_state.sensitivity_parameter = DEFAULT_SENSITIVITY_PARAMETER
+
+
 def init_ui_state() -> None:
+    # Run this migration on every rerun, even for sessions initialized by an
+    # older version of the app.
+    ensure_sensitivity_ui_state()
+
     if "ui_initialized" in st.session_state:
         return
 
@@ -290,9 +320,9 @@ def init_ui_state() -> None:
 
     # Weitere Zustände
     st.session_state.result_bundle = None
-    st.session_state.sensitivity_range_percent = 30
-    st.session_state.sensitivity_points = 13
-    st.session_state.sensitivity_parameter = "electricity_price"
+    st.session_state.sensitivity_range_percent = DEFAULT_SENSITIVITY_RANGE_PERCENT
+    st.session_state.sensitivity_points = DEFAULT_SENSITIVITY_POINTS
+    st.session_state.sensitivity_parameter = DEFAULT_SENSITIVITY_PARAMETER
     st.session_state.ui_initialized = True
 
 
@@ -2682,20 +2712,28 @@ with tabs[6]:
 
         c1, c2, c3 = st.columns([1.0, 1.0, 1.4])
         with c1:
-            st.slider(
+            sensitivity_range_percent = st.slider(
                 "Variationsbereich ± [%]",
                 min_value=5,
                 max_value=80,
                 step=5,
                 key="sensitivity_range_percent",
+                help=(
+                    "Standard: ±30 % wie im Excel-Sensitivitätsblatt. "
+                    "Der gewählte Wert wird unmittelbar für Tornado-Diagramm, Tabelle und Detailkurve verwendet."
+                ),
             )
         with c2:
-            st.slider(
+            sensitivity_points = st.slider(
                 "Punkte der Detailkurve",
                 min_value=5,
                 max_value=31,
                 step=2,
                 key="sensitivity_points",
+                help=(
+                    "Standard: 13 Punkte. Bei ±30 % entstehen dadurch 5-%-Schritte von −30 % bis +30 % "
+                    "einschließlich des Basisfalls bei 0 %."
+                ),
             )
         with c3:
             label_to_key = {p.label: p.key for p in EXCEL_SENSITIVITY_PARAMETERS}
@@ -2709,14 +2747,14 @@ with tabs[6]:
             )
             st.session_state.sensitivity_parameter = label_to_key[selected_label]
 
-        relative_range = st.session_state.sensitivity_range_percent / 100.0
+        relative_range = sensitivity_range_percent / 100.0
         tornado_df = compute_tornado(model_inputs, results, relative_range)
 
         st.markdown("### Einfluss auf den LCOH")
         tornado_fig = go.Figure()
         tornado_fig.add_trace(
             go.Bar(
-                name=f"−{st.session_state.sensitivity_range_percent} %",
+                name=f"−{sensitivity_range_percent} %",
                 y=tornado_df["Parameter"],
                 x=tornado_df["Delta_minus"],
                 orientation="h",
@@ -2726,7 +2764,7 @@ with tabs[6]:
         )
         tornado_fig.add_trace(
             go.Bar(
-                name=f"+{st.session_state.sensitivity_range_percent} %",
+                name=f"+{sensitivity_range_percent} %",
                 y=tornado_df["Parameter"],
                 x=tornado_df["Delta_plus"],
                 orientation="h",
@@ -2746,22 +2784,22 @@ with tabs[6]:
         render_plotly(tornado_fig)
 
         display_tornado = tornado_df.copy().sort_values("Spannweite", ascending=False)
-        display_tornado[f"LCOH −{st.session_state.sensitivity_range_percent} % [€/kg]"] = display_tornado["LCOH_minus"]
+        display_tornado[f"LCOH −{sensitivity_range_percent} % [€/kg]"] = display_tornado["LCOH_minus"]
         display_tornado["Basis [€/kg]"] = display_tornado["LCOH_basis"]
-        display_tornado[f"LCOH +{st.session_state.sensitivity_range_percent} % [€/kg]"] = display_tornado["LCOH_plus"]
+        display_tornado[f"LCOH +{sensitivity_range_percent} % [€/kg]"] = display_tornado["LCOH_plus"]
         st.dataframe(
             display_tornado[[
                 "Parameter",
-                f"LCOH −{st.session_state.sensitivity_range_percent} % [€/kg]",
+                f"LCOH −{sensitivity_range_percent} % [€/kg]",
                 "Basis [€/kg]",
-                f"LCOH +{st.session_state.sensitivity_range_percent} % [€/kg]",
+                f"LCOH +{sensitivity_range_percent} % [€/kg]",
             ]],
             use_container_width=True,
             hide_index=True,
             column_config={
-                f"LCOH −{st.session_state.sensitivity_range_percent} % [€/kg]": st.column_config.NumberColumn(format="%.3f"),
+                f"LCOH −{sensitivity_range_percent} % [€/kg]": st.column_config.NumberColumn(format="%.3f"),
                 "Basis [€/kg]": st.column_config.NumberColumn(format="%.3f"),
-                f"LCOH +{st.session_state.sensitivity_range_percent} % [€/kg]": st.column_config.NumberColumn(format="%.3f"),
+                f"LCOH +{sensitivity_range_percent} % [€/kg]": st.column_config.NumberColumn(format="%.3f"),
             },
         )
 
@@ -2772,7 +2810,7 @@ with tabs[6]:
             results,
             parameter_key,
             relative_range=relative_range,
-            points=st.session_state.sensitivity_points,
+            points=sensitivity_points,
         )
 
         st.markdown(f"### Detailkurve: {parameter.label}")

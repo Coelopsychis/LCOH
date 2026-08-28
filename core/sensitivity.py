@@ -57,6 +57,13 @@ EXCEL_SENSITIVITY_PARAMETERS = (
 
 PARAMETER_BY_KEY = {p.key: p for p in EXCEL_SENSITIVITY_PARAMETERS}
 
+# Central defaults used by both the Streamlit widgets and the calculation
+# helpers. Keeping them here prevents UI/calculation drift.
+DEFAULT_SENSITIVITY_RANGE = 0.30
+DEFAULT_SENSITIVITY_RANGE_PERCENT = 30
+DEFAULT_SENSITIVITY_POINTS = 13
+DEFAULT_SENSITIVITY_PARAMETER = "electricity_price"
+
 
 def _safe_factor(relative_change: float) -> float:
     # Negative prices/rates created solely by a sensitivity factor are not
@@ -221,7 +228,7 @@ def compute_excel_sensitivity_lcoh(
 def compute_tornado(
     inputs: ModelInputs,
     base_results: dict,
-    relative_range: float = 0.30,
+    relative_range: float = DEFAULT_SENSITIVITY_RANGE,
 ) -> pd.DataFrame:
     base_lcoh = float(base_results["lcoh_eur_per_kg"])
     rows = []
@@ -251,8 +258,8 @@ def compute_sensitivity_curve(
     inputs: ModelInputs,
     base_results: dict,
     parameter_key: str,
-    relative_range: float = 0.30,
-    points: int = 13,
+    relative_range: float = DEFAULT_SENSITIVITY_RANGE,
+    points: int = DEFAULT_SENSITIVITY_POINTS,
 ) -> pd.DataFrame:
     points = max(int(points), 3)
     changes = np.linspace(-relative_range, relative_range, points)
