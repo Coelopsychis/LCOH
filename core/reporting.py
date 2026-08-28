@@ -462,3 +462,18 @@ def json_compatible(value):
     if isinstance(value, (pd.Timestamp,)):
         return value.isoformat()
     return value
+
+
+def dataframe_to_csv_bytes(df: pd.DataFrame) -> bytes:
+    """Serialize an export table in the application's German CSV convention.
+
+    Semicolon separator + decimal comma are used consistently for result and
+    sensitivity exports. UTF-8 with BOM improves direct opening in spreadsheet
+    applications while remaining standards-compliant UTF-8.
+    """
+    return df.to_csv(
+        index=False,
+        sep=";",
+        decimal=",",
+        lineterminator="\n",
+    ).encode("utf-8-sig")

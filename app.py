@@ -44,6 +44,7 @@ from core.reporting import (
     utilization_duration_curve,
     complete_result_overview,
     json_compatible,
+    dataframe_to_csv_bytes,
 )
 from core.scenario import (
     normalize_timeseries,
@@ -742,6 +743,40 @@ init_ui_state()
 # ============================================================
 
 
+if st.sidebar.button("Berechnung starten", type="primary", use_container_width=True):
+    try:
+        model_inputs = build_model_inputs_from_ui()
+        current_ts = current_timeseries_from_ui()
+        st.session_state.timeseries_df = current_ts.copy()
+        dispatch_df = build_dispatch(model_inputs, current_ts)
+        results = compute_lcoh(model_inputs, dispatch_df)
+
+        st.session_state.result_bundle = {
+            "inputs": model_inputs,
+            "dispatch": dispatch_df,
+            "results": results,
+        }
+    except Exception as e:
+        st.sidebar.error(f"Fehler: {e}")
+
+st.sidebar.title("Key Performance Indicators")
+st.sidebar.divider()
+
+if st.session_state.result_bundle is None:
+    st.sidebar.info("Noch keine Ergebnisse verfügbar.")
+else:
+    r = st.session_state.result_bundle["results"]
+    st.sidebar.metric("LCOH", f"{de_number(r['lcoh_eur_per_kg'], 2)} €/kg")
+    st.sidebar.metric("H₂-Produktion", f"{de_number(r['annual_h2_kg'] / 1000.0, 0)} t/a")
+    st.sidebar.metric("Volllaststunden", f"{de_number(r['equivalent_full_load_hours'], 0)} h/a")
+    st.sidebar.metric(
+        "Strompreis Elektrolyseur",
+        f"{de_number(r['electricity_price_ely_eur_per_mwh'], 2)} €/MWh",
+    )
+
+
+st.sidebar.divider()
+
 # ------------------------------------------------------------
 # Simulation speichern / laden
 # ------------------------------------------------------------
@@ -816,39 +851,6 @@ with st.sidebar.expander("Simulation speichern / laden", expanded=False):
             st.rerun()
         except Exception as exc:
             st.error(f"Simulation konnte nicht geladen werden: {exc}")
-
-st.sidebar.divider()
-
-if st.sidebar.button("Berechnung starten", type="primary", use_container_width=True):
-    try:
-        model_inputs = build_model_inputs_from_ui()
-        current_ts = current_timeseries_from_ui()
-        st.session_state.timeseries_df = current_ts.copy()
-        dispatch_df = build_dispatch(model_inputs, current_ts)
-        results = compute_lcoh(model_inputs, dispatch_df)
-
-        st.session_state.result_bundle = {
-            "inputs": model_inputs,
-            "dispatch": dispatch_df,
-            "results": results,
-        }
-    except Exception as e:
-        st.sidebar.error(f"Fehler: {e}")
-
-st.sidebar.title("Key Performance Indicators")
-st.sidebar.divider()
-
-if st.session_state.result_bundle is None:
-    st.sidebar.info("Noch keine Ergebnisse verfügbar.")
-else:
-    r = st.session_state.result_bundle["results"]
-    st.sidebar.metric("LCOH", f"{de_number(r['lcoh_eur_per_kg'], 2)} €/kg")
-    st.sidebar.metric("H₂-Produktion", f"{de_number(r['annual_h2_kg'] / 1000.0, 0)} t/a")
-    st.sidebar.metric("Volllaststunden", f"{de_number(r['equivalent_full_load_hours'], 0)} h/a")
-    st.sidebar.metric(
-        "Strompreis Elektrolyseur",
-        f"{de_number(r['electricity_price_ely_eur_per_mwh'], 2)} €/MWh",
-    )
 
 
 # ============================================================
@@ -3174,9 +3176,7 @@ with tabs[5]:
             # key and raw model value. This is substantially more complete and
             # easier to process than the previous single-row results dict export.
             export_csv_df = overview_raw_df.copy()
-            export_csv = export_csv_df.to_csv(
-                index=False, sep=";", decimal=",", encoding="utf-8"
-            ).encode("utf-8")
+            export_csv = dataframe_to_csv_bytes(export_csv_df)
             st.download_button(
                 "Ergebnisse als CSV herunterladen",
                 export_csv,
@@ -3330,18 +3330,21 @@ with tabs[6]:
         )
         render_plotly(curve_fig)
 
-        with st.expander("Methodik & Export", expanded=False):
-            st.markdown(
-                "**Excel-Kompatibilität:** CAPEX- und OPEX-Sensitivitäten skalieren wie in Rev. 8 "
-                "die jeweilige Kostenkomponente und nicht automatisch alle davon abhängigen Eingaben. "
-                "Die Projektlaufzeit wirkt in dieser Analyse auf Finanzierung und Stacktausch; "
-                "Volllaststunden skalieren Produktion und energieabhängige Größen proportional. "
-                "So sind die Ergebnisse mit dem Sensitivitätsblatt des Excel-Tools vergleichbar."
-            )
-            sensitivity_csv = curve_df.to_csv(index=False, sep=";", decimal=",").encode("utf-8")
-            st.download_button(
-                "Detailkurve als CSV herunterladen",
-                sensitivity_csv,
-                f"lcoh_sensitivitaet_{parameter_key}.csv",
-                "text/csv",
-            )
+        sensitivity_export_df = pd.DataFrame(
+            {
+                "Parameter": parameter.label,
+                "Schlüssel": parameter.key,
+                "Änderung [%]": curve_df["Änderung [%]"],
+                "Parameterfaktor [–]": 1.0 + curve_df["Änderung"],
+                "LCOH [€/kg H₂]": curve_df["LCOH [€/kg]"],
+                "Δ LCOH [€/kg H₂]": curve_df["Δ LCOH [€/kg]"],
+                "Basis-LCOH [€/kg H₂]": results["lcoh_eur_per_kg"],
+            }
+        )
+        sensitivity_csv = dataframe_to_csv_bytes(sensitivity_export_df)
+        st.download_button(
+            "Detailkurve als CSV herunterladen",
+            sensitivity_csv,
+            f"lcoh_sensitivitaet_{parameter_key}.csv",
+            "text/csv",
+        )
