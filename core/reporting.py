@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 
 
@@ -49,3 +50,30 @@ def revenue_distribution(results: dict) -> pd.DataFrame:
     ]
     df = pd.DataFrame(rows, columns=["Komponente", "€/a"])
     return df[df["€/a"] > 0].reset_index(drop=True)
+
+
+def utilization_duration_curve(dispatch_df: pd.DataFrame) -> pd.DataFrame:
+    """Return a robust load-duration curve from the hourly utilization series.
+
+    ``utilization`` is stored as a fraction in the dispatch (0...1). Invalid
+    values are discarded and the remaining values are clipped to the physical
+    interval before sorting in descending order. The result is presentation-
+    ready in percent and deliberately independent of Streamlit's implicit chart
+    data conversion.
+    """
+    if "utilization" not in dispatch_df.columns:
+        return pd.DataFrame(columns=["Stundenrang", "Auslastung [%]"])
+
+    values = pd.to_numeric(dispatch_df["utilization"], errors="coerce").to_numpy(dtype=float)
+    values = values[np.isfinite(values)]
+    if values.size == 0:
+        return pd.DataFrame(columns=["Stundenrang", "Auslastung [%]"])
+
+    values = np.clip(values, 0.0, 1.0)
+    values = np.sort(values)[::-1] * 100.0
+    return pd.DataFrame(
+        {
+            "Stundenrang": np.arange(1, values.size + 1, dtype=int),
+            "Auslastung [%]": values,
+        }
+    )

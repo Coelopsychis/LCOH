@@ -34,7 +34,12 @@ from core.sensitivity import (
     compute_sensitivity_curve,
     compute_tornado,
 )
-from core.reporting import lcoh_bridge, positive_cost_distribution, revenue_distribution
+from core.reporting import (
+    lcoh_bridge,
+    positive_cost_distribution,
+    revenue_distribution,
+    utilization_duration_curve,
+)
 
 import plotly.graph_objects as go
 
@@ -48,6 +53,27 @@ def de_number(value, decimals=2):
     return f"{value:,.{decimals}f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 st.set_page_config(page_title="Berechnungstool LCOH", layout="wide")
+
+
+PLOTLY_CONFIG = {
+    "displaylogo": False,
+    "responsive": True,
+    "modeBarButtonsToRemove": ["lasso2d", "select2d"],
+}
+
+
+def render_plotly(fig: go.Figure) -> None:
+    """Render all application charts with one common Plotly/Streamlit setup."""
+    fig.update_layout(
+        font=dict(size=13),
+        hoverlabel=dict(namelength=-1),
+    )
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        theme="streamlit",
+        config=PLOTLY_CONFIG,
+    )
 
 
 # ============================================================
@@ -513,10 +539,13 @@ if st.session_state.result_bundle is None:
     st.sidebar.info("Noch keine Ergebnisse verfügbar.")
 else:
     r = st.session_state.result_bundle["results"]
-    st.sidebar.metric("LCOH [€/kg]", de_number(r["lcoh_eur_per_kg"], 2))
-    st.sidebar.metric("LCOH [ct/kWh]", de_number(r["lcoh_ct_per_kwh"], 2))
-    st.sidebar.metric("H₂-Produktion [kg/a]", de_number(r["annual_h2_kg"], 0))
-    st.sidebar.metric("Ely-Stromverbrauch [MWh/a]", de_number(r["annual_ely_mwh"], 0))
+    st.sidebar.metric("LCOH", f"{de_number(r['lcoh_eur_per_kg'], 2)} €/kg")
+    st.sidebar.metric("H₂-Produktion", f"{de_number(r['annual_h2_kg'] / 1000.0, 0)} t/a")
+    st.sidebar.metric("Volllaststunden", f"{de_number(r['equivalent_full_load_hours'], 0)} h/a")
+    st.sidebar.metric(
+        "Strompreis Elektrolyseur",
+        f"{de_number(r['electricity_price_ely_eur_per_mwh'], 2)} €/MWh",
+    )
 
 
 # ============================================================
@@ -1836,7 +1865,7 @@ with tabs[3]:
 
             fig.update_xaxes(rangeslider_visible=True)
 
-            st.plotly_chart(fig, use_container_width=True)
+            render_plotly(fig)
 
         tab_pv, tab_wind, tab_spot, tab_co2, tab_13k = st.tabs(
             ["PV", "Wind", "Spotmarkt", "CO₂ (§7)", "§13k"]
@@ -2127,7 +2156,7 @@ with tabs[5]:
                 margin=dict(l=30, r=20, t=20, b=90),
                 height=470,
             )
-            st.plotly_chart(waterfall, use_container_width=True)
+            render_plotly(waterfall)
 
         with chart_right:
             pie_cost = go.Figure(
@@ -2144,7 +2173,7 @@ with tabs[5]:
                 height=470,
                 showlegend=False,
             )
-            st.plotly_chart(pie_cost, use_container_width=True)
+            render_plotly(pie_cost)
 
         if not revenue_dist_df.empty:
             with st.expander("Förderungen & Erlöse im Überblick", expanded=False):
@@ -2162,7 +2191,7 @@ with tabs[5]:
                     margin=dict(l=30, r=20, t=20, b=80),
                     height=390,
                 )
-                st.plotly_chart(relief_fig, use_container_width=True)
+                render_plotly(relief_fig)
 
         # ----------------------------------------------------
         # Kostenstruktur
@@ -2384,8 +2413,26 @@ with tabs[5]:
                 soc_df = pd.DataFrame({
                     "Stunde": np.arange(1, len(dispatch_df) + 1),
                     "SOC [MWh]": dispatch_df["battery_soc_kwh"].to_numpy() / 1000.0,
-                }).set_index("Stunde")
-                st.line_chart(soc_df)
+                })
+                st.markdown("##### Ladezustand über das Jahr")
+                soc_fig = go.Figure(
+                    go.Scattergl(
+                        x=soc_df["Stunde"],
+                        y=soc_df["SOC [MWh]"],
+                        mode="lines",
+                        name="SOC",
+                        hovertemplate="Stunde %{x:,.0f}<br>SOC %{y:,.1f} MWh<extra></extra>",
+                    )
+                )
+                soc_fig.update_layout(
+                    xaxis_title="Stunde des Jahres",
+                    yaxis_title="Ladezustand [MWh]",
+                    height=360,
+                    margin=dict(l=20, r=20, t=20, b=45),
+                    hovermode="x unified",
+                    showlegend=False,
+                )
+                render_plotly(soc_fig)
 
         # ----------------------------------------------------
         # Visualisierung
@@ -2395,14 +2442,31 @@ with tabs[5]:
 
             with col1:
                 st.markdown("### Dauerlinie der Auslastung")
-                duration_curve = np.sort(dispatch_df["utilization"].to_numpy())[::-1] * 100.0
-                duration_df = pd.DataFrame(
-                    {
-                        "Stundenrang": np.arange(1, len(duration_curve) + 1),
-                        "Auslastung [%]": duration_curve,
-                    }
-                )
-                st.line_chart(duration_df.set_index("Stundenrang"))
+                duration_df = utilization_duration_curve(dispatch_df)
+                if duration_df.empty:
+                    st.info("Für die Dauerlinie sind keine gültigen Auslastungsdaten vorhanden.")
+                else:
+                    duration_fig = go.Figure(
+                        go.Scatter(
+                            x=duration_df["Stundenrang"],
+                            y=duration_df["Auslastung [%]"],
+                            mode="lines",
+                            name="Auslastung",
+                            hovertemplate=(
+                                "Stundenrang %{x:,.0f}<br>"
+                                "Auslastung %{y:.1f} %<extra></extra>"
+                            ),
+                        )
+                    )
+                    duration_fig.update_layout(
+                        xaxis_title="Stundenrang [h/a]",
+                        yaxis_title="Auslastung [%]",
+                        yaxis=dict(range=[0, 100]),
+                        height=360,
+                        margin=dict(l=20, r=20, t=20, b=20),
+                        showlegend=False,
+                    )
+                    render_plotly(duration_fig)
 
             with col2:
                 st.markdown("### Strommix (Jahressummen)")
@@ -2439,8 +2503,25 @@ with tabs[5]:
                             dispatch_df["oxygen_compressor_consumption_kwh"].sum() / 1000.0,
                         ],
                     }
-                ).set_index("Kategorie")
-                st.bar_chart(mix_df)
+                )
+                mix_fig = go.Figure(
+                    go.Bar(
+                        x=mix_df["MWh/a"],
+                        y=mix_df["Kategorie"],
+                        orientation="h",
+                        name="Energie",
+                        hovertemplate="%{y}<br>%{x:,.0f} MWh/a<extra></extra>",
+                    )
+                )
+                mix_fig.update_layout(
+                    xaxis_title="Energie [MWh/a]",
+                    yaxis_title="",
+                    yaxis=dict(autorange="reversed"),
+                    height=430,
+                    margin=dict(l=20, r=20, t=20, b=45),
+                    showlegend=False,
+                )
+                render_plotly(mix_fig)
 
             st.markdown("### Kostenstruktur (jährlich)")
             cost_breakdown_df = pd.DataFrame(
@@ -2500,8 +2581,26 @@ with tabs[5]:
                         -results["other_revenue_2_eur_per_year"],
                     ],
                 }
-            ).set_index("Kategorie")
-            st.bar_chart(cost_breakdown_df)
+            )
+            cost_breakdown_fig = go.Figure(
+                go.Bar(
+                    x=cost_breakdown_df["€/a"],
+                    y=cost_breakdown_df["Kategorie"],
+                    orientation="h",
+                    name="Kosten / Erlöse",
+                    hovertemplate="%{y}<br>%{x:,.0f} €/a<extra></extra>",
+                )
+            )
+            cost_breakdown_fig.add_vline(x=0.0, line_width=1)
+            cost_breakdown_fig.update_layout(
+                xaxis_title="Jährlicher Beitrag [€/a]",
+                yaxis_title="",
+                yaxis=dict(autorange="reversed"),
+                height=720,
+                margin=dict(l=20, r=20, t=20, b=45),
+                showlegend=False,
+            )
+            render_plotly(cost_breakdown_fig)
 
         # ----------------------------------------------------
         # Ergebnisübersicht als Tabelle
@@ -2644,7 +2743,7 @@ with tabs[6]:
             margin=dict(l=20, r=20, t=20, b=40),
             legend_title="Szenario",
         )
-        st.plotly_chart(tornado_fig, use_container_width=True)
+        render_plotly(tornado_fig)
 
         display_tornado = tornado_df.copy().sort_values("Spannweite", ascending=False)
         display_tornado[f"LCOH −{st.session_state.sensitivity_range_percent} % [€/kg]"] = display_tornado["LCOH_minus"]
@@ -2698,7 +2797,7 @@ with tabs[6]:
             height=460,
             margin=dict(l=30, r=20, t=20, b=50),
         )
-        st.plotly_chart(curve_fig, use_container_width=True)
+        render_plotly(curve_fig)
 
         with st.expander("Methodik & Export", expanded=False):
             st.markdown(
