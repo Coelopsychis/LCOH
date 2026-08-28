@@ -606,6 +606,10 @@ st.title("Berechnungstool LCOH")
 st.caption(
     "Tool zur Berechnung von Wasserstoffgestehungskosten (Levelised Cost of Hydrogen)"
 )
+st.caption(
+    "Tipp: Das ? an den Eingabefeldern erklärt Bedeutung, Bezugsgröße und Wirkung im Rechenmodell. "
+    "Die Methodik orientiert sich an Excel Rev. 8."
+)
 
 tabs = st.tabs(
     [
@@ -637,6 +641,8 @@ with tabs[0]:
                 max_value=2100,
                 step=1,
                 key="commissioning_year",
+                help=HELP["commissioning_year"],
+                format="%d",
             )
 
         with c2:
@@ -646,6 +652,8 @@ with tabs[0]:
                 max_value=50,
                 step=1,
                 key="project_lifetime_years",
+                help=HELP["project_lifetime_years"],
+                format="%d",
             )
 
     with st.expander("Leistungsdaten", expanded=True):
@@ -658,6 +666,8 @@ with tabs[0]:
                 max_value=1_000_000.0,
                 step=100.0,
                 key="electrolyzer_power_kw",
+                help=HELP["electrolyzer_power_kw"],
+                format="%.0f",
             )
 
         with c2:
@@ -668,6 +678,7 @@ with tabs[0]:
                 step=1.0,
                 key="peripheral_power_fraction",
                 help=HELP["peripheral_power_fraction"],
+                format="%.0f%%",
             )
             st.caption(
                 f"Berechnete Systemleistung: "
@@ -699,6 +710,7 @@ with tabs[0]:
                 step=1_000.0,
                 key="stack_lifetime_hours",
                 help=HELP["stack_lifetime_hours"],
+                format="%.0f",
             )
 
         with c3:
@@ -727,6 +739,7 @@ with tabs[1]:
                 step=10.0,
                 key="electrolyzer_invest_eur_per_kw",
                 help=HELP["electrolyzer_invest_eur_per_kw"],
+                format="%.0f",
             )
             st.number_input(
                 "Engineering, Procurement & Construction [€/kW]",
@@ -734,6 +747,8 @@ with tabs[1]:
                 max_value=100_000.0,
                 step=10.0,
                 key="epc_eur_per_kw",
+                help=HELP["epc_eur_per_kw"],
+                format="%.0f",
             )
             st.number_input(
                 "Hochbau [€/kW]",
@@ -741,6 +756,8 @@ with tabs[1]:
                 max_value=100_000.0,
                 step=10.0,
                 key="hochbau_eur_per_kw",
+                help=HELP["hochbau_eur_per_kw"],
+                format="%.0f",
             )
             st.number_input(
                 "Individuelle CAPEX pro Leistung [€/kW]",
@@ -748,6 +765,8 @@ with tabs[1]:
                 max_value=100_000.0,
                 step=10.0,
                 key="individual_specific_eur_per_kw",
+                help=HELP["individual_specific_eur_per_kw"],
+                format="%.0f",
             )
             st.slider(
                 "Individuelle CAPEX [% der Ely-Kosten]",
@@ -755,6 +774,8 @@ with tabs[1]:
                 max_value=100.0,
                 step=0.1,
                 key="individual_ely_cost_share",
+                help=HELP["individual_ely_cost_share"],
+                format="%.1f%%",
             )
 
         with c2:
@@ -765,6 +786,7 @@ with tabs[1]:
                 step=10.0,
                 key="bop_eur_per_kw",
                 help=HELP["bop_eur_per_kw"],
+                format="%.0f",
             )
             st.number_input(
                 "Tiefbau [€/kW]",
@@ -772,6 +794,8 @@ with tabs[1]:
                 max_value=100_000.0,
                 step=10.0,
                 key="tiefbau_eur_per_kw",
+                help=HELP["tiefbau_eur_per_kw"],
+                format="%.0f",
             )
             st.number_input(
                 "Individuelle CAPEX pauschal [€]",
@@ -779,6 +803,8 @@ with tabs[1]:
                 max_value=1_000_000_000.0,
                 step=10_000.0,
                 key="individual_fixed_eur",
+                help=HELP["individual_fixed_eur"],
+                format="%.0f",
             )
 
     with st.expander("Abwärme", expanded=False):
@@ -793,6 +819,8 @@ with tabs[1]:
                 min_value=0.0, max_value=100_000.0, step=10.0,
                 key="waste_heat_system_eur_per_kw",
                 disabled=not st.session_state.waste_heat_enabled,
+                help=HELP["waste_heat_system_eur_per_kw"],
+                format="%.0f",
             )
         with c2:
             st.number_input(
@@ -800,18 +828,23 @@ with tabs[1]:
                 min_value=0.0, max_value=10_000.0, step=1.0,
                 key="waste_heat_price_eur_per_mwh",
                 disabled=not st.session_state.waste_heat_enabled,
+                help=HELP["waste_heat_price_eur_per_mwh"],
+                format="%.1f",
             )
             st.slider(
                 "Nutzbarer Anteil Abwärme [%]", 0.0, 100.0, 1.0,
                 key="waste_heat_usable_share",
                 disabled=not st.session_state.waste_heat_enabled,
+                help=HELP["waste_heat_usable_share"],
+                format="%.0f%%",
             )
         with c3:
             st.slider(
                 "Preisentwicklung Abwärme [%/a]", -20.0, 30.0, 0.5,
                 key="waste_heat_price_escalation_per_year",
                 disabled=not st.session_state.waste_heat_enabled,
-                help=HELP["price_escalation"],
+                help=HELP["waste_heat_price_escalation_per_year"],
+                format="%.1f%%",
             )
 
     with st.expander("Sauerstoff", expanded=False):
@@ -826,39 +859,52 @@ with tabs[1]:
                 min_value=0.0, max_value=100_000.0, step=10.0,
                 key="oxygen_system_eur_per_kw",
                 disabled=not st.session_state.oxygen_enabled,
+                help=HELP["oxygen_system_eur_per_kw"],
+                format="%.0f",
             )
             st.number_input(
                 "Verdichterdruck O₂ [bar]", min_value=0.01, max_value=2_000.0, step=1.0,
                 key="oxygen_compressor_outlet_pressure_bar",
                 disabled=not st.session_state.oxygen_enabled,
+                help=HELP["oxygen_compressor_outlet_pressure_bar"],
+                format="%.2f",
             )
         with c2:
             st.number_input(
                 "Eingangsdruck O₂ [bar]", min_value=0.01, max_value=1_000.0, step=1.0,
                 key="oxygen_compressor_inlet_pressure_bar",
                 disabled=not st.session_state.oxygen_enabled,
+                help=HELP["oxygen_compressor_inlet_pressure_bar"],
+                format="%.2f",
             )
             st.number_input(
                 "Eintrittstemperatur O₂ [°C]", min_value=-250.0, max_value=1_000.0, step=1.0,
                 key="oxygen_compressor_inlet_temperature_c",
                 disabled=not st.session_state.oxygen_enabled,
+                help=HELP["oxygen_compressor_inlet_temperature_c"],
+                format="%.1f",
             )
             st.slider(
                 "Wirkungsgrad O₂-Kompressor [%]", 1.0, 100.0, 1.0,
                 key="oxygen_compressor_efficiency",
                 disabled=not st.session_state.oxygen_enabled,
+                help=HELP["oxygen_compressor_efficiency"],
+                format="%.0f%%",
             )
         with c3:
             st.number_input(
                 "Verkaufspreis Sauerstoff [€/t]", min_value=0.0, max_value=100_000.0, step=1.0,
                 key="oxygen_price_eur_per_t",
                 disabled=not st.session_state.oxygen_enabled,
+                help=HELP["oxygen_price_eur_per_t"],
+                format="%.0f",
             )
             st.slider(
                 "Preisentwicklung Sauerstoff [%/a]", -20.0, 30.0, 0.5,
                 key="oxygen_price_escalation_per_year",
                 disabled=not st.session_state.oxygen_enabled,
-                help=HELP["price_escalation"],
+                help=HELP["oxygen_price_escalation_per_year"],
+                format="%.1f%%",
             )
 
     with st.expander("H₂-Aufbereitung", expanded=False):
@@ -871,38 +917,52 @@ with tabs[1]:
             st.number_input(
                 "Direktsystemkosten [€/kW]", min_value=0.0, max_value=100_000.0, step=10.0,
                 key="h2_direct_system_eur_per_kw", disabled=st.session_state.compression_enabled,
+                help=HELP["h2_direct_system_eur_per_kw"],
+                format="%.0f",
             )
             st.number_input(
                 "Verdichtersystemkosten [€/kW]", min_value=0.0, max_value=100_000.0, step=10.0,
                 key="compressor_system_eur_per_kw", disabled=not st.session_state.compression_enabled,
+                help=HELP["compressor_system_eur_per_kw"],
+                format="%.0f",
             )
             st.slider(
                 "Anteil des jährlich produzierten H₂ zur Verdichtung [%]", 0.0, 100.0, 1.0,
                 key="h2_processed_share", disabled=not st.session_state.compression_enabled,
+                help=HELP["h2_processed_share"],
+                format="%.0f%%",
             )
         with c2:
             st.number_input(
                 "Verdichterdruck H₂ [bar]", min_value=0.01, max_value=2_000.0, step=1.0,
                 key="h2_compressor_outlet_pressure_bar", disabled=not st.session_state.compression_enabled,
+                help=HELP["h2_compressor_outlet_pressure_bar"],
+                format="%.2f",
             )
             st.number_input(
                 "Eingangsdruck H₂ [bar]", min_value=0.01, max_value=1_000.0, step=1.0,
                 key="h2_compressor_inlet_pressure_bar", disabled=not st.session_state.compression_enabled,
+                help=HELP["h2_compressor_inlet_pressure_bar"],
+                format="%.2f",
             )
         with c3:
             st.number_input(
                 "Eintrittstemperatur H₂ [°C]", min_value=-250.0, max_value=1_000.0, step=1.0,
                 key="h2_compressor_inlet_temperature_c", disabled=not st.session_state.compression_enabled,
+                help=HELP["h2_compressor_inlet_temperature_c"],
+                format="%.1f",
             )
             st.slider(
                 "Wirkungsgrad H₂-Kompressor [%]", 1.0, 100.0, 1.0,
                 key="h2_compressor_efficiency", disabled=not st.session_state.compression_enabled,
+                help=HELP["h2_compressor_efficiency"],
+                format="%.0f%%",
             )
 
     with st.expander("Batteriesystem", expanded=False):
         c1, c2 = st.columns(2)
         with c1:
-            st.checkbox("Batteriesystem wird genutzt", key="battery_enabled")
+            st.checkbox("Batteriesystem wird genutzt", key="battery_enabled", help=HELP["battery_enabled"])
             st.number_input(
                 "Faktor für Speicherkapazität [kWh pro kW Systemleistung]",
                 min_value=0.0,
@@ -910,6 +970,8 @@ with tabs[1]:
                 step=0.1,
                 key="battery_capacity_factor_kwh_per_kw",
                 disabled=not st.session_state.battery_enabled,
+                help=HELP["battery_capacity_factor_kwh_per_kw"],
+                format="%.1f",
             )
         with c2:
             st.number_input(
@@ -919,6 +981,8 @@ with tabs[1]:
                 step=100.0,
                 key="battery_power_kw",
                 disabled=not st.session_state.battery_enabled,
+                help=HELP["battery_power_kw"],
+                format="%.0f",
             )
             st.number_input(
                 "Investitionskosten [€/kWh]",
@@ -927,6 +991,8 @@ with tabs[1]:
                 step=10.0,
                 key="battery_invest_eur_per_kwh",
                 disabled=not st.session_state.battery_enabled,
+                help=HELP["battery_invest_eur_per_kwh"],
+                format="%.0f",
             )
             st.number_input(
                 "Sonstige Batteriekosten [€]",
@@ -935,6 +1001,8 @@ with tabs[1]:
                 step=10_000.0,
                 key="battery_fixed_eur",
                 disabled=not st.session_state.battery_enabled,
+                help=HELP["battery_fixed_eur"],
+                format="%.0f",
             )
 
     with st.expander("Stacktausch & Finanzierung", expanded=True):
@@ -946,6 +1014,7 @@ with tabs[1]:
                 min_value=0.0, max_value=100.0, step=1.0,
                 key="stack_replacement_share_of_ely_capex",
                 help=HELP["stack_replacement_share"],
+                format="%.0f%%",
             )
         with c2:
             st.slider(
@@ -953,27 +1022,31 @@ with tabs[1]:
                 min_value=-20.0, max_value=20.0, step=0.5,
                 key="stack_cost_degression_per_year",
                 help=HELP["stack_cost_degression"],
+                format="%.1f%%",
             )
         with c3:
             st.slider(
                 "Zins Stackfinanzierung [%/a]",
                 min_value=0.0, max_value=30.0, step=0.5,
                 key="stack_financing_interest_rate",
+                help=HELP["stack_financing_interest_rate"],
+                format="%.1f%%",
             )
 
         st.markdown("**Projektfinanzierung**")
         c1, c2, c3, c4 = st.columns(4)
         with c1:
-            st.slider("Fremdkapitalquote [%]", 0.0, 100.0, 1.0, key="debt_share")
+            st.slider("Fremdkapitalquote [%]", 0.0, 100.0, 1.0, key="debt_share", help=HELP["debt_share"], format="%.0f%%")
         with c2:
-            st.slider("Zins Fremdkapital [%/a]", 0.0, 30.0, 0.5, key="debt_interest_rate")
+            st.slider("Zins Fremdkapital [%/a]", 0.0, 30.0, 0.5, key="debt_interest_rate", help=HELP["debt_interest_rate"], format="%.1f%%")
         with c3:
             st.slider(
                 "Kalkulatorischer Zins Eigenkapital [%/a]", 0.0, 30.0, 0.5,
                 key="equity_interest_rate", help=HELP["equity_interest_rate"],
+                format="%.1f%%",
             )
         with c4:
-            st.slider("Unternehmenssteuersatz (WACC) [%]", 0.0, 60.0, 1.0, key="corporate_tax_rate")
+            st.slider("Unternehmenssteuersatz (WACC) [%]", 0.0, 60.0, 1.0, key="corporate_tax_rate", help=HELP["corporate_tax_rate"], format="%.0f%%")
 
 # ============================================================
 # Tab 3: OPEX
@@ -995,7 +1068,8 @@ with tabs[2]:
                 min_value=0.0, max_value=25.0, step=0.05,
                 key="lump_sum_share_of_capex",
                 disabled=not st.session_state.lump_sum_enabled,
-                format="%.2f",
+                format="%.2f%%",
+                help=HELP["lump_sum_share_of_capex"],
             )
         with c2:
             st.slider(
@@ -1003,8 +1077,8 @@ with tabs[2]:
                 min_value=-20.0, max_value=30.0, step=0.05,
                 key="lump_sum_escalation_per_year",
                 disabled=not st.session_state.lump_sum_enabled,
-                format="%.2f",
-                help=HELP["price_escalation"],
+                format="%.2f%%",
+                help=HELP["lump_sum_escalation_per_year"],
             )
         if st.session_state.lump_sum_enabled:
             st.info(
@@ -1022,7 +1096,8 @@ with tabs[2]:
                 max_value=10.0,
                 step=0.05,
                 key="maintenance_share_of_capex",
-                format="%.2f",
+                format="%.2f%%",
+                help=HELP["maintenance_share_of_capex"],
             )
 
         with c2:
@@ -1032,7 +1107,8 @@ with tabs[2]:
                 max_value=10.0,
                 step=0.05,
                 key="maintenance_escalation_per_year",
-                format="%.2f",
+                format="%.2f%%",
+                help=HELP["maintenance_escalation_per_year"],
             )
 
     with st.expander("Personalkosten", expanded=True):
@@ -1045,6 +1121,8 @@ with tabs[2]:
                 max_value=100_000_000.0,
                 step=1_000.0,
                 key="personnel_eur_per_year",
+                help=HELP["personnel_eur_per_year"],
+                format="%.0f",
             )
 
         with c2:
@@ -1054,7 +1132,8 @@ with tabs[2]:
                 max_value=10.0,
                 step=0.05,
                 key="personnel_escalation_per_year",
-                format="%.2f",
+                format="%.2f%%",
+                help=HELP["personnel_escalation_per_year"],
             )
 
     with st.expander("Rückstellungen (ohne Stacktausch)", expanded=True):
@@ -1067,7 +1146,8 @@ with tabs[2]:
                 max_value=10.0,
                 step=0.05,
                 key="reserve_remaining_plant_share_of_capex",
-                format="%.2f",
+                format="%.2f%%",
+                help=HELP["reserve_remaining_plant_share_of_capex"],
             )
 
         with c2:
@@ -1077,7 +1157,8 @@ with tabs[2]:
                 max_value=10.0,
                 step=0.05,
                 key="reserve_decommissioning_share_of_capex",
-                format="%.2f",
+                format="%.2f%%",
+                help=HELP["reserve_decommissioning_share_of_capex"],
             )
 
         with c3:
@@ -1087,7 +1168,8 @@ with tabs[2]:
                 max_value=10.0,
                 step=0.05,
                 key="reserve_escalation_per_year",
-                format="%.2f",
+                format="%.2f%%",
+                help=HELP["reserve_escalation_per_year"],
             )
 
     with st.expander("Wasser", expanded=True):
@@ -1100,6 +1182,8 @@ with tabs[2]:
                 max_value=1_000.0,
                 step=0.1,
                 key="freshwater_price_eur_per_m3",
+                help=HELP["freshwater_price_eur_per_m3"],
+                format="%.2f",
             )
             st.number_input(
                 "Preis Aufbereitung Frischwasser [€ / m³]",
@@ -1107,6 +1191,8 @@ with tabs[2]:
                 max_value=1_000.0,
                 step=0.1,
                 key="freshwater_treatment_price_eur_per_m3",
+                help=HELP["freshwater_treatment_price_eur_per_m3"],
+                format="%.2f",
             )
 
         with c2:
@@ -1116,6 +1202,8 @@ with tabs[2]:
                 max_value=1_000.0,
                 step=0.1,
                 key="wastewater_price_eur_per_m3",
+                help=HELP["wastewater_price_eur_per_m3"],
+                format="%.2f",
             )
             st.slider(
                 "Preisentwicklung pro Jahr [%]",
@@ -1123,7 +1211,8 @@ with tabs[2]:
                 max_value=10.0,
                 step=0.05,
                 key="water_escalation_per_year",
-                format="%.2f",
+                format="%.2f%%",
+                help=HELP["water_escalation_per_year"],
             )
 
     with st.expander("Individuelle OPEX", expanded=True):
@@ -1136,7 +1225,8 @@ with tabs[2]:
                 max_value=10.0,
                 step=0.05,
                 key="individual_opex_share_of_capex",
-                format="%.2f",
+                format="%.2f%%",
+                help=HELP["individual_opex_share_of_capex"],
             )
 
         with c2:
@@ -1146,7 +1236,8 @@ with tabs[2]:
                 max_value=10.0,
                 step=0.05,
                 key="individual_opex_escalation_per_year",
-                format="%.2f",
+                format="%.2f%%",
+                help=HELP["individual_opex_escalation_per_year"],
             )
 
 
@@ -1157,25 +1248,34 @@ with tabs[2]:
             st.number_input(
                 "Preis THG-Quote [€/t CO₂]", min_value=0.0, max_value=10_000.0, step=10.0,
                 key="thg_price_eur_per_tco2", disabled=not st.session_state.thg_enabled,
+                help=HELP["thg_price_eur_per_tco2"],
+                format="%.0f",
             )
         with c2:
             st.slider(
                 "Anteil H₂ für Mobilitätssektor [%]", 0.0, 100.0, 1.0,
                 key="mobility_share", disabled=not st.session_state.thg_enabled,
+                help=HELP["mobility_share"],
+                format="%.0f%%",
             )
             st.slider(
                 "Anteil an THG-Einnahmen [%]", 0.0, 100.0, 1.0,
                 key="thg_revenue_share", disabled=not st.session_state.thg_enabled,
+                help=HELP["thg_revenue_share"],
+                format="%.0f%%",
             )
         with c3:
             st.number_input(
                 "THG-Intensität grüner H₂ [kg CO₂/GJ]", min_value=0.0, max_value=100.0, step=0.5,
                 key="h2_thg_intensity_kgco2_per_gj", disabled=not st.session_state.thg_enabled,
+                help=HELP["h2_thg_intensity_kgco2_per_gj"],
+                format="%.1f",
             )
             st.slider(
                 "Preisentwicklung THG-Quote [%/a]", -20.0, 30.0, 0.5,
                 key="thg_price_escalation_per_year", disabled=not st.session_state.thg_enabled,
-                help=HELP["price_escalation"],
+                help=HELP["thg_price_escalation_per_year"],
+                format="%.1f%%",
             )
 
     with st.expander("Weitere Einnahmen – Regelenergie", expanded=False):
@@ -1192,6 +1292,8 @@ with tabs[2]:
                 min_value=0.0, max_value=1_000_000_000.0, step=10_000.0,
                 key="balancing_energy_revenue_eur_per_year",
                 disabled=not st.session_state.balancing_energy_enabled,
+                help=HELP["balancing_energy_revenue_eur_per_year"],
+                format="%.0f",
             )
         with c3:
             st.slider(
@@ -1199,7 +1301,8 @@ with tabs[2]:
                 -20.0, 30.0, 0.5,
                 key="balancing_energy_escalation_per_year",
                 disabled=not st.session_state.balancing_energy_enabled,
-                help=HELP["price_escalation"],
+                help=HELP["balancing_energy_escalation_per_year"],
+                format="%.1f%%",
             )
         st.caption(
             "Wie Excel Rev. 8: Regelenergie wird nicht stündlich simuliert, sondern über einen extern kalkulierten Jahresertrag abgebildet."
@@ -1218,13 +1321,16 @@ with tabs[2]:
                 min_value=0.0, max_value=1_000_000_000.0, step=10_000.0,
                 key="other_revenue_1_eur_per_year",
                 disabled=not st.session_state.other_revenues_enabled,
+                help=HELP["other_revenue_1_eur_per_year"],
+                format="%.0f",
             )
             st.slider(
                 "Preisentwicklung Sonstige 1 [%/a]",
                 -20.0, 30.0, 0.5,
                 key="other_revenue_1_escalation_per_year",
                 disabled=not st.session_state.other_revenues_enabled,
-                help=HELP["price_escalation"],
+                help=HELP["other_revenue_1_escalation_per_year"],
+                format="%.1f%%",
             )
         with c2:
             st.number_input(
@@ -1232,13 +1338,16 @@ with tabs[2]:
                 min_value=0.0, max_value=1_000_000_000.0, step=10_000.0,
                 key="other_revenue_2_eur_per_year",
                 disabled=not st.session_state.other_revenues_enabled,
+                help=HELP["other_revenue_2_eur_per_year"],
+                format="%.0f",
             )
             st.slider(
                 "Preisentwicklung Sonstige 2 [%/a]",
                 -20.0, 30.0, 0.5,
                 key="other_revenue_2_escalation_per_year",
                 disabled=not st.session_state.other_revenues_enabled,
-                help=HELP["price_escalation"],
+                help=HELP["other_revenue_2_escalation_per_year"],
+                format="%.1f%%",
             )
 
 
@@ -1256,7 +1365,7 @@ with tabs[3]:
         c1, c2, c3 = st.columns(3)
 
         with c1:
-            st.checkbox("Baseload-PPA wird genutzt", key="baseload_enabled")
+            st.checkbox("Baseload-PPA wird genutzt", key="baseload_enabled", help=HELP["baseload_enabled"])
 
         with c2:
             st.number_input(
@@ -1266,6 +1375,8 @@ with tabs[3]:
                 step=100.0,
                 key="baseload_kw",
                 disabled=not st.session_state.baseload_enabled,
+                help=HELP["baseload_kw"],
+                format="%.0f",
             )
 
         with c3:
@@ -1276,6 +1387,8 @@ with tabs[3]:
                 step=1.0,
                 key="baseload_price_eur_per_mwh",
                 disabled=not st.session_state.baseload_enabled,
+                help=HELP["baseload_price_eur_per_mwh"],
+                format="%.1f",
             )
 
         st.slider(
@@ -1284,8 +1397,9 @@ with tabs[3]:
             max_value=20.0,
             step=0.1,
             key="baseload_price_escalation_per_year",
-            format="%.1f",
+            format="%.1f%%",
             disabled=not st.session_state.baseload_enabled,
+            help=HELP["baseload_price_escalation_per_year"],
         )
 
     # ------------------------------------------------------------
@@ -1296,7 +1410,7 @@ with tabs[3]:
         c1, c2, c3 = st.columns(3)
 
         with c1:
-            st.checkbox("PV-PPA wird genutzt", key="ppa_pv_enabled")
+            st.checkbox("PV-PPA wird genutzt", key="ppa_pv_enabled", help=HELP["ppa_pv_enabled"])
 
         with c2:
             st.number_input(
@@ -1306,6 +1420,8 @@ with tabs[3]:
                 step=100.0,
                 key="ppa_pv_capacity_kw",
                 disabled=not st.session_state.ppa_pv_enabled,
+                help=HELP["ppa_pv_capacity_kw"],
+                format="%.0f",
             )
 
         with c3:
@@ -1316,13 +1432,15 @@ with tabs[3]:
                 step=1.0,
                 key="ppa_pv_price_eur_per_mwh",
                 disabled=not st.session_state.ppa_pv_enabled,
+                help=HELP["ppa_pv_price_eur_per_mwh"],
+                format="%.1f",
             )
 
         st.markdown("#### Wind-PPA")
         c4, c5, c6 = st.columns(3)
 
         with c4:
-            st.checkbox("Wind-PPA wird genutzt", key="ppa_wind_enabled")
+            st.checkbox("Wind-PPA wird genutzt", key="ppa_wind_enabled", help=HELP["ppa_wind_enabled"])
 
         with c5:
             st.number_input(
@@ -1332,6 +1450,8 @@ with tabs[3]:
                 step=100.0,
                 key="ppa_wind_capacity_kw",
                 disabled=not st.session_state.ppa_wind_enabled,
+                help=HELP["ppa_wind_capacity_kw"],
+                format="%.0f",
             )
 
         with c6:
@@ -1342,6 +1462,8 @@ with tabs[3]:
                 step=1.0,
                 key="ppa_wind_price_eur_per_mwh",
                 disabled=not st.session_state.ppa_wind_enabled,
+                help=HELP["ppa_wind_price_eur_per_mwh"],
+                format="%.1f",
             )
 
         st.slider(
@@ -1350,7 +1472,8 @@ with tabs[3]:
             max_value=20.0,
             step=0.1,
             key="ppa_price_escalation_per_year",
-            format="%.1f",
+            format="%.1f%%",
+            help=HELP["ppa_price_escalation_per_year"],
         )
 
     # ------------------------------------------------------------
@@ -1384,6 +1507,7 @@ with tabs[3]:
                 options=["Jahresdaten", "Eigener Wert"],
                 key="section7_co2_price_mode",
                 disabled=not st.session_state.section7_enabled,
+                help=HELP["section7_co2_price_mode"],
             )
         with c4:
             st.number_input(
@@ -1396,6 +1520,8 @@ with tabs[3]:
                     not st.session_state.section7_enabled
                     or st.session_state.section7_co2_price_mode != "Eigener Wert"
                 ),
+                help=HELP["section7_co2_price_eur_per_t"],
+                format="%.1f",
             )
 
         st.slider(
@@ -1405,7 +1531,8 @@ with tabs[3]:
             step=0.5,
             key="section7_co2_price_escalation_per_year",
             disabled=not st.session_state.section7_enabled,
-            help=HELP["price_escalation"],
+            help=HELP["section7_co2_price_escalation_per_year"],
+            format="%.1f%%",
         )
 
         if st.session_state.section7_co2_price_mode == "Jahresdaten":
@@ -1419,6 +1546,7 @@ with tabs[3]:
                     "CO₂-Jahresdaten als CSV [€/t CO₂]",
                     type=["csv"],
                     key="co2_price_csv",
+                    help=HELP["co2_price_csv"],
                 )
                 if co2_upload is not None and st.button("CO₂-CSV übernehmen", key="co2_csv_btn"):
                     try:
@@ -1434,6 +1562,7 @@ with tabs[3]:
                 "CO₂-Preis: eine Zahl pro Stunde [€/t CO₂]",
                 key="co2_price_text",
                 height=180,
+                help=HELP["co2_price_text"],
             )
             try:
                 co2_values = parse_timeseries_text(
@@ -1473,6 +1602,8 @@ with tabs[3]:
                 step=1.0,
                 key="section13k_price_eur_per_mwh",
                 disabled=not st.session_state.section13k_enabled,
+                help=HELP["section13k_price_eur_per_mwh"],
+                format="%.1f",
             )
         with c3:
             st.slider(
@@ -1482,7 +1613,8 @@ with tabs[3]:
                 step=0.5,
                 key="section13k_price_escalation_per_year",
                 disabled=not st.session_state.section13k_enabled,
-                help=HELP["price_escalation"],
+                help=HELP["section13k_price_escalation_per_year"],
+                format="%.1f%%",
             )
 
         c4, c5 = st.columns([1, 2])
@@ -1497,6 +1629,7 @@ with tabs[3]:
                 "§13k-Jahresdaten als CSV [kWh/h]",
                 type=["csv"],
                 key="section13k_csv",
+                help=HELP["section13k_csv"],
             )
             if section13k_upload is not None and st.button(
                 "§13k-CSV übernehmen", key="section13k_csv_btn"
@@ -1514,6 +1647,7 @@ with tabs[3]:
             "Verfügbare §13k-Leistung: eine Zahl pro Stunde [kWh/h]",
             key="section13k_profile_text",
             height=180,
+            help=HELP["section13k_profile_text"],
         )
         try:
             section13k_values = parse_timeseries_text(
@@ -1564,18 +1698,30 @@ with tabs[3]:
                     step=0.001,
                     key=value_key,
                     label_visibility="collapsed",
+                    help=HELP[value_key],
+                    format="%.3f",
                 )
             with c3:
                 st.checkbox(
                     f"Ely {label}",
                     key=f"electrolyzer_{exemption_key}_exempt",
                     label_visibility="collapsed",
+                    help=(
+                        f"Aktivieren, wenn der Kostenbestandteil „{label}“ für den Elektrolyseur nicht anfällt. "
+                        "Das Modell setzt diesen Satz dann für den Elektrolyseur auf 0; die tatsächliche "
+                        "Anspruchsberechtigung muss außerhalb des Rechners geprüft werden."
+                    ),
                 )
             with c4:
                 st.checkbox(
                     f"Rest {label}",
                     key=f"rest_{exemption_key}_exempt",
                     label_visibility="collapsed",
+                    help=(
+                        f"Aktivieren, wenn der Kostenbestandteil „{label}“ für die übrigen Verbraucher "
+                        "(Peripherie/Verdichter) nicht anfällt. Das Modell setzt diesen Satz dann für den "
+                        "Restverbrauch auf 0; die tatsächliche Anspruchsberechtigung ist separat zu prüfen."
+                    ),
                 )
 
         st.divider()
@@ -1588,11 +1734,14 @@ with tabs[3]:
                 max_value=10_000.0,
                 step=0.1,
                 key="electrolyzer_demand_charge_eur_per_kw_month",
+                help=HELP["electrolyzer_demand_charge_eur_per_kw_month"],
+                format="%.2f",
             )
         with c2:
             st.checkbox(
                 "Befreiung Leistungspreis Ely",
                 key="electrolyzer_demand_charge_exempt",
+                help=HELP["electrolyzer_demand_charge_exempt"],
             )
         with c3:
             st.number_input(
@@ -1601,11 +1750,14 @@ with tabs[3]:
                 max_value=10_000.0,
                 step=0.1,
                 key="rest_demand_charge_eur_per_kw_month",
+                help=HELP["rest_demand_charge_eur_per_kw_month"],
+                format="%.2f",
             )
         with c4:
             st.checkbox(
                 "Befreiung Leistungspreis Rest",
                 key="rest_demand_charge_exempt",
+                help=HELP["rest_demand_charge_exempt"],
             )
 
     # ------------------------------------------------------------
@@ -1620,7 +1772,7 @@ with tabs[3]:
                 st.session_state.pv_profile_text = timeseries_to_text(demo_df["pv_kwh_per_kw"])
 
         with c2:
-            pv_upload = st.file_uploader("PV-Profil als CSV", type=["csv"], key="pv_profile_csv")
+            pv_upload = st.file_uploader("PV-Profil als CSV", type=["csv"], key="pv_profile_csv", help=HELP["pv_profile_csv"])
             if pv_upload is not None and st.button("PV-CSV übernehmen", key="pv_csv_btn"):
                 try:
                     values = read_numeric_csv_series(pv_upload)
@@ -1635,6 +1787,7 @@ with tabs[3]:
             "PV-Profil: eine Zahl pro Stunde (0 bis 1)",
             key="pv_profile_text",
             height=220,
+            help=HELP["pv_profile_text"],
         )
 
         try:
@@ -1664,7 +1817,7 @@ with tabs[3]:
                 st.session_state.wind_profile_text = timeseries_to_text(demo_df["wind_kwh_per_kw"])
 
         with c2:
-            wind_upload = st.file_uploader("Wind-Profil als CSV", type=["csv"], key="wind_profile_csv")
+            wind_upload = st.file_uploader("Wind-Profil als CSV", type=["csv"], key="wind_profile_csv", help=HELP["wind_profile_csv"])
             if wind_upload is not None and st.button("Wind-CSV übernehmen", key="wind_csv_btn"):
                 try:
                     values = read_numeric_csv_series(wind_upload)
@@ -1679,6 +1832,7 @@ with tabs[3]:
             "Wind-Profil: eine Zahl pro Stunde (0 bis 1)",
             key="wind_profile_text",
             height=220,
+            help=HELP["wind_profile_text"],
         )
 
         try:
@@ -1706,6 +1860,7 @@ with tabs[3]:
             st.checkbox(
                 "Fehlenden Strom auf dem Spotmarkt kaufen",
                 key="spot_purchase_enabled",
+                help=HELP["spot_purchase_enabled"],
             )
 
         with c2:
@@ -1713,6 +1868,7 @@ with tabs[3]:
                 "Maximalpreis verwenden",
                 key="spot_purchase_price_limit_enabled",
                 disabled=not st.session_state.spot_purchase_enabled,
+                help=HELP["spot_purchase_price_limit_enabled"],
             )
 
         with c3:
@@ -1726,6 +1882,8 @@ with tabs[3]:
                     not st.session_state.spot_purchase_enabled
                     or not st.session_state.spot_purchase_price_limit_enabled
                 ),
+                help=HELP["spot_purchase_price_limit_eur_per_mwh"],
+                format="%.1f",
             )
 
         st.slider(
@@ -1733,7 +1891,8 @@ with tabs[3]:
             min_value=-20.0, max_value=30.0, step=0.5,
             key="spot_price_escalation_per_year",
             disabled=not st.session_state.spot_purchase_enabled,
-            help=HELP["price_escalation"],
+            help=HELP["spot_price_escalation_per_year"],
+            format="%.1f%%",
         )
 
 
@@ -1756,7 +1915,7 @@ with tabs[3]:
                 options=["Spotmarkt", "PPA"],
                 key="power_sale_mode",
                 disabled=not st.session_state.spot_sale_enabled,
-                help=HELP.get("power_sale_mode"),
+                help=HELP["power_sale_mode"],
             )
 
         with c3:
@@ -1770,7 +1929,8 @@ with tabs[3]:
                     not st.session_state.spot_sale_enabled
                     or st.session_state.power_sale_mode != "PPA"
                 ),
-                help=HELP.get("ppa_sale_price"),
+                help=HELP["ppa_sale_price_eur_per_mwh"],
+                format="%.1f",
             )
 
         st.slider(
@@ -1778,7 +1938,8 @@ with tabs[3]:
             min_value=-20.0, max_value=30.0, step=0.5,
             key="spot_sale_price_escalation_per_year",
             disabled=not st.session_state.spot_sale_enabled,
-            help=HELP["price_escalation"],
+            help=HELP["spot_sale_price_escalation_per_year"],
+            format="%.1f%%",
         )
 
         if st.session_state.power_sale_mode == "Spotmarkt":
@@ -1789,7 +1950,7 @@ with tabs[3]:
                     "Minimalpreis verwenden",
                     key="spot_sale_price_limit_enabled",
                     disabled=not st.session_state.spot_sale_enabled,
-                    help="Zusätzliche Streamlit-Option; Excel Rev. 8 verkauft im Spotmodus ohne diese Mindestpreisgrenze.",
+                    help=HELP["spot_sale_price_limit_enabled"]
                 )
             with c5:
                 st.number_input(
@@ -1802,6 +1963,8 @@ with tabs[3]:
                         not st.session_state.spot_sale_enabled
                         or not st.session_state.spot_sale_price_limit_enabled
                     ),
+                    help=HELP["spot_sale_min_price_eur_per_mwh"],
+                    format="%.1f",
                 )
 
         st.caption(
@@ -1821,7 +1984,7 @@ with tabs[3]:
                 st.session_state.spot_price_text = timeseries_to_text(demo_df["day_ahead_eur_per_mwh"])
 
         with c2:
-            spot_upload = st.file_uploader("Spotpreise als CSV [€/MWh]", type=["csv"], key="spot_price_csv")
+            spot_upload = st.file_uploader("Spotpreise als CSV [€/MWh]", type=["csv"], key="spot_price_csv", help=HELP["spot_price_csv"])
             if spot_upload is not None and st.button("Spotpreis-CSV übernehmen", key="spot_csv_btn"):
                 try:
                     values = read_numeric_csv_series(spot_upload)
@@ -1834,6 +1997,7 @@ with tabs[3]:
             "Spotpreise: eine Zahl pro Stunde [€/MWh]",
             key="spot_price_text",
             height=220,
+            help=HELP["spot_price_text"],
         )
 
         try:
@@ -2019,6 +2183,8 @@ with tabs[4]:
                 min_value=0.0, max_value=100.0, step=0.5,
                 key="capex_subsidy_percentage",
                 disabled=st.session_state.capex_subsidy_mode != "Prozentual",
+                help=HELP["capex_subsidy_percentage"],
+                format="%.1f%%",
             )
         with c2:
             st.number_input(
@@ -2026,6 +2192,8 @@ with tabs[4]:
                 min_value=0.0, max_value=100_000.0, step=10.0,
                 key="capex_subsidy_absolute_eur_per_kw",
                 disabled=st.session_state.capex_subsidy_mode != "Absolut",
+                help=HELP["capex_subsidy_absolute_eur_per_kw"],
+                format="%.0f",
             )
         st.caption("Die Gesamtförderung reduziert direkt die zu finanzierenden CAPEX; für die Förderübersicht wird sie gleichmäßig auf die Projektlaufzeit verteilt.")
 
@@ -2042,12 +2210,16 @@ with tabs[4]:
                 "Förderung [€/kg H₂]", min_value=0.0, max_value=10_000.0, step=0.01,
                 key="opex_subsidy_eur_per_kg_h2",
                 disabled=st.session_state.opex_subsidy_mode != "Pro kg",
+                help=HELP["opex_subsidy_eur_per_kg_h2"],
+                format="%.2f",
             )
         with c2:
             st.number_input(
                 "Förderung [€/Volllaststunde]", min_value=0.0, max_value=10_000_000.0, step=10.0,
                 key="opex_subsidy_eur_per_full_load_hour",
                 disabled=st.session_state.opex_subsidy_mode != "Pro Volllaststunde",
+                help=HELP["opex_subsidy_eur_per_full_load_hour"],
+                format="%.0f",
             )
         if not st.session_state.lump_sum_enabled and st.session_state.opex_subsidy_mode != "Ohne":
             st.warning(
@@ -2069,12 +2241,16 @@ with tabs[4]:
                 "Förderung [€/kg H₂]", min_value=0.0, max_value=10_000.0, step=0.01,
                 key="electricity_subsidy_eur_per_kg_h2",
                 disabled=st.session_state.electricity_subsidy_mode != "Pro kg",
+                help=HELP["electricity_subsidy_eur_per_kg_h2"],
+                format="%.2f",
             )
         with c2:
             st.number_input(
                 "Förderung [€/MWh Systemstromverbrauch]", min_value=0.0, max_value=10_000.0, step=1.0,
                 key="electricity_subsidy_eur_per_mwh",
                 disabled=st.session_state.electricity_subsidy_mode != "Pro MWh Strom",
+                help=HELP["electricity_subsidy_eur_per_mwh"],
+                format="%.1f",
             )
 
     with st.expander("Strompreiskompensation (SPK)", expanded=True):
@@ -2090,11 +2266,15 @@ with tabs[4]:
                 "EUA-Preis [€/t CO₂]", min_value=0.0, max_value=10_000.0, step=1.0,
                 key="spk_eua_price_eur_per_tco2",
                 disabled=st.session_state.spk_mode != "Rechner",
+                help=HELP["spk_eua_price_eur_per_tco2"],
+                format="%.1f",
             )
             st.number_input(
                 "Faktor zum Stromverbrauch", min_value=0.0, max_value=10.0, step=0.01,
                 key="spk_power_consumption_factor",
                 disabled=st.session_state.spk_mode != "Rechner",
+                help=HELP["spk_power_consumption_factor"],
+                format="%.2f",
             )
         with c2:
             st.slider(
@@ -2102,13 +2282,16 @@ with tabs[4]:
                 min_value=-20.0, max_value=30.0, step=0.5,
                 key="spk_price_escalation_per_year",
                 disabled=st.session_state.spk_mode == "Ohne",
-                help=HELP["price_escalation"],
+                help=HELP["spk_price_escalation_per_year"],
+                format="%.1f%%",
             )
             st.number_input(
                 "Separat kalkulierter SPK-Ertrag [€/a]",
                 min_value=0.0, max_value=1_000_000_000.0, step=10_000.0,
                 key="spk_separate_revenue_eur_per_year",
                 disabled=st.session_state.spk_mode != "Separat",
+                help=HELP["spk_separate_revenue_eur_per_year"],
+                format="%.0f",
             )
         if st.session_state.spk_mode == "Rechner":
             st.caption(
@@ -2739,10 +2922,8 @@ with tabs[6]:
                 value=int(st.session_state.sensitivity_range_percent),
                 step=5,
                 key=SENSITIVITY_RANGE_WIDGET_KEY,
-                help=(
-                    "Standard: ±30 % wie im Excel-Sensitivitätsblatt. "
-                    "Der gewählte Wert wird unmittelbar für Tornado-Diagramm, Tabelle und Detailkurve verwendet."
-                ),
+                help=HELP["sensitivity_range_percent"],
+                format="%d%%",
             )
             st.session_state.sensitivity_range_percent = sensitivity_range_percent
         with c2:
@@ -2753,10 +2934,8 @@ with tabs[6]:
                 value=int(st.session_state.sensitivity_points),
                 step=2,
                 key=SENSITIVITY_POINTS_WIDGET_KEY,
-                help=(
-                    "Standard: 13 Punkte. Bei ±30 % entstehen dadurch 5-%-Schritte von −30 % bis +30 % "
-                    "einschließlich des Basisfalls bei 0 %."
-                ),
+                help=HELP["sensitivity_points"],
+                format="%d",
             )
             st.session_state.sensitivity_points = sensitivity_points
         with c3:
@@ -2768,6 +2947,7 @@ with tabs[6]:
                 index=list(label_to_key).index(
                     key_to_label.get(st.session_state.sensitivity_parameter, "Strompreis")
                 ),
+                help=HELP["sensitivity_parameter"],
             )
             st.session_state.sensitivity_parameter = label_to_key[selected_label]
 
