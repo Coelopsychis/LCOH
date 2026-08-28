@@ -807,6 +807,49 @@ with tabs[1]:
                 format="%.0f",
             )
 
+    with st.expander("Stacktausch & Finanzierung", expanded=True):
+        st.markdown("**Stacktausch**")
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.slider(
+                "Kosten Stacktausch [% der Ely-Investitionskosten]",
+                min_value=0.0, max_value=100.0, step=1.0,
+                key="stack_replacement_share_of_ely_capex",
+                help=HELP["stack_replacement_share"],
+                format="%.0f%%",
+            )
+        with c2:
+            st.slider(
+                "Kostendegression Stack [%/a]",
+                min_value=-20.0, max_value=20.0, step=0.5,
+                key="stack_cost_degression_per_year",
+                help=HELP["stack_cost_degression"],
+                format="%.1f%%",
+            )
+        with c3:
+            st.slider(
+                "Zins Stackfinanzierung [%/a]",
+                min_value=0.0, max_value=30.0, step=0.5,
+                key="stack_financing_interest_rate",
+                help=HELP["stack_financing_interest_rate"],
+                format="%.1f%%",
+            )
+
+        st.markdown("**Projektfinanzierung**")
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            st.slider("Fremdkapitalquote [%]", 0.0, 100.0, 1.0, key="debt_share", help=HELP["debt_share"], format="%.0f%%")
+        with c2:
+            st.slider("Zins Fremdkapital [%/a]", 0.0, 30.0, 0.5, key="debt_interest_rate", help=HELP["debt_interest_rate"], format="%.1f%%")
+        with c3:
+            st.slider(
+                "Kalkulatorischer Zins Eigenkapital [%/a]", 0.0, 30.0, 0.5,
+                key="equity_interest_rate", help=HELP["equity_interest_rate"],
+                format="%.1f%%",
+            )
+        with c4:
+            st.slider("Unternehmenssteuersatz (WACC) [%]", 0.0, 60.0, 1.0, key="corporate_tax_rate", help=HELP["corporate_tax_rate"], format="%.0f%%")
+    
     with st.expander("Abwärme", expanded=False):
         c1, c2, c3 = st.columns(3)
         with c1:
@@ -1005,48 +1048,6 @@ with tabs[1]:
                 format="%.0f",
             )
 
-    with st.expander("Stacktausch & Finanzierung", expanded=True):
-        st.markdown("**Stacktausch**")
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            st.slider(
-                "Kosten Stacktausch [% der Ely-Investitionskosten]",
-                min_value=0.0, max_value=100.0, step=1.0,
-                key="stack_replacement_share_of_ely_capex",
-                help=HELP["stack_replacement_share"],
-                format="%.0f%%",
-            )
-        with c2:
-            st.slider(
-                "Kostendegression Stack [%/a]",
-                min_value=-20.0, max_value=20.0, step=0.5,
-                key="stack_cost_degression_per_year",
-                help=HELP["stack_cost_degression"],
-                format="%.1f%%",
-            )
-        with c3:
-            st.slider(
-                "Zins Stackfinanzierung [%/a]",
-                min_value=0.0, max_value=30.0, step=0.5,
-                key="stack_financing_interest_rate",
-                help=HELP["stack_financing_interest_rate"],
-                format="%.1f%%",
-            )
-
-        st.markdown("**Projektfinanzierung**")
-        c1, c2, c3, c4 = st.columns(4)
-        with c1:
-            st.slider("Fremdkapitalquote [%]", 0.0, 100.0, 1.0, key="debt_share", help=HELP["debt_share"], format="%.0f%%")
-        with c2:
-            st.slider("Zins Fremdkapital [%/a]", 0.0, 30.0, 0.5, key="debt_interest_rate", help=HELP["debt_interest_rate"], format="%.1f%%")
-        with c3:
-            st.slider(
-                "Kalkulatorischer Zins Eigenkapital [%/a]", 0.0, 30.0, 0.5,
-                key="equity_interest_rate", help=HELP["equity_interest_rate"],
-                format="%.1f%%",
-            )
-        with c4:
-            st.slider("Unternehmenssteuersatz (WACC) [%]", 0.0, 60.0, 1.0, key="corporate_tax_rate", help=HELP["corporate_tax_rate"], format="%.0f%%")
 
 # ============================================================
 # Tab 3: OPEX
