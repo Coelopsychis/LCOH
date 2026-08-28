@@ -70,6 +70,9 @@ def render_plotly(fig: go.Figure) -> None:
     fig.update_layout(
         font=dict(size=13),
         hoverlabel=dict(namelength=-1),
+        # Nur Plotly wird deutsch formatiert: Dezimalkomma, Tausenderpunkt.
+        # Die nativen Streamlit-Eingabewidgets bleiben bewusst unverändert.
+        separators=",.",
     )
     st.plotly_chart(
         fig,
@@ -807,7 +810,7 @@ with tabs[1]:
                 format="%.0f",
             )
 
-    with st.expander("Stacktausch & Finanzierung", expanded=True):
+    with st.expander("Stacktausch und Finanzierung", expanded=True):
         st.markdown("**Stacktausch**")
         c1, c2, c3 = st.columns(3)
         with c1:
@@ -838,18 +841,18 @@ with tabs[1]:
         st.markdown("**Projektfinanzierung**")
         c1, c2, c3, c4 = st.columns(4)
         with c1:
-            st.slider("Fremdkapitalquote [%]", 0.0, 100.0, 1.0, key="debt_share", help=HELP["debt_share"], format="%.0f%%")
+            st.slider("Fremdkapitalquote [%]", min_value=0.0, max_value=100.0, step=1.0, key="debt_share", help=HELP["debt_share"], format="%.0f%%")
         with c2:
-            st.slider("Zins Fremdkapital [%/a]", 0.0, 30.0, 0.5, key="debt_interest_rate", help=HELP["debt_interest_rate"], format="%.1f%%")
+            st.slider("Zins Fremdkapital [%/a]", min_value=0.0, max_value=30.0, step=0.5, key="debt_interest_rate", help=HELP["debt_interest_rate"], format="%.1f%%")
         with c3:
             st.slider(
-                "Kalkulatorischer Zins Eigenkapital [%/a]", 0.0, 30.0, 0.5,
+                "Kalkulatorischer Zins Eigenkapital [%/a]", min_value=0.0, max_value=30.0, step=0.5,
                 key="equity_interest_rate", help=HELP["equity_interest_rate"],
                 format="%.1f%%",
             )
         with c4:
-            st.slider("Unternehmenssteuersatz (WACC) [%]", 0.0, 60.0, 1.0, key="corporate_tax_rate", help=HELP["corporate_tax_rate"], format="%.0f%%")
-    
+            st.slider("Unternehmenssteuersatz (WACC) [%]", min_value=0.0, max_value=60.0, step=1.0, key="corporate_tax_rate", help=HELP["corporate_tax_rate"], format="%.0f%%")
+
     with st.expander("Abwärme", expanded=False):
         c1, c2, c3 = st.columns(3)
         with c1:
@@ -875,7 +878,7 @@ with tabs[1]:
                 format="%.1f",
             )
             st.slider(
-                "Nutzbarer Anteil Abwärme [%]", 0.0, 100.0, 1.0,
+                "Nutzbarer Anteil Abwärme [%]", min_value=0.0, max_value=100.0, step=1.0,
                 key="waste_heat_usable_share",
                 disabled=not st.session_state.waste_heat_enabled,
                 help=HELP["waste_heat_usable_share"],
@@ -883,7 +886,7 @@ with tabs[1]:
             )
         with c3:
             st.slider(
-                "Preisentwicklung Abwärme [%/a]", -20.0, 30.0, 0.5,
+                "Preisentwicklung Abwärme [%/a]", min_value=-20.0, max_value=30.0, step=0.5,
                 key="waste_heat_price_escalation_per_year",
                 disabled=not st.session_state.waste_heat_enabled,
                 help=HELP["waste_heat_price_escalation_per_year"],
@@ -928,7 +931,7 @@ with tabs[1]:
                 format="%.1f",
             )
             st.slider(
-                "Wirkungsgrad O₂-Kompressor [%]", 1.0, 100.0, 1.0,
+                "Wirkungsgrad O₂-Kompressor [%]", min_value=1.0, max_value=100.0, step=1.0,
                 key="oxygen_compressor_efficiency",
                 disabled=not st.session_state.oxygen_enabled,
                 help=HELP["oxygen_compressor_efficiency"],
@@ -943,7 +946,7 @@ with tabs[1]:
                 format="%.0f",
             )
             st.slider(
-                "Preisentwicklung Sauerstoff [%/a]", -20.0, 30.0, 0.5,
+                "Preisentwicklung Sauerstoff [%/a]", min_value=-20.0, max_value=30.0, step=0.5,
                 key="oxygen_price_escalation_per_year",
                 disabled=not st.session_state.oxygen_enabled,
                 help=HELP["oxygen_price_escalation_per_year"],
@@ -970,7 +973,7 @@ with tabs[1]:
                 format="%.0f",
             )
             st.slider(
-                "Anteil des jährlich produzierten H₂ zur Verdichtung [%]", 0.0, 100.0, 1.0,
+                "Anteil des jährlich produzierten H₂ zur Verdichtung [%]", min_value=0.0, max_value=100.0, step=1.0,
                 key="h2_processed_share", disabled=not st.session_state.compression_enabled,
                 help=HELP["h2_processed_share"],
                 format="%.0f%%",
@@ -996,7 +999,7 @@ with tabs[1]:
                 format="%.1f",
             )
             st.slider(
-                "Wirkungsgrad H₂-Kompressor [%]", 1.0, 100.0, 1.0,
+                "Wirkungsgrad H₂-Kompressor [%]", min_value=1.0, max_value=100.0, step=1.0,
                 key="h2_compressor_efficiency", disabled=not st.session_state.compression_enabled,
                 help=HELP["h2_compressor_efficiency"],
                 format="%.0f%%",
@@ -1254,13 +1257,13 @@ with tabs[2]:
             )
         with c2:
             st.slider(
-                "Anteil H₂ für Mobilitätssektor [%]", 0.0, 100.0, 1.0,
+                "Anteil H₂ für Mobilitätssektor [%]", min_value=0.0, max_value=100.0, step=1.0,
                 key="mobility_share", disabled=not st.session_state.thg_enabled,
                 help=HELP["mobility_share"],
                 format="%.0f%%",
             )
             st.slider(
-                "Anteil an THG-Einnahmen [%]", 0.0, 100.0, 1.0,
+                "Anteil an THG-Einnahmen [%]", min_value=0.0, max_value=100.0, step=1.0,
                 key="thg_revenue_share", disabled=not st.session_state.thg_enabled,
                 help=HELP["thg_revenue_share"],
                 format="%.0f%%",
@@ -1273,7 +1276,7 @@ with tabs[2]:
                 format="%.1f",
             )
             st.slider(
-                "Preisentwicklung THG-Quote [%/a]", -20.0, 30.0, 0.5,
+                "Preisentwicklung THG-Quote [%/a]", min_value=-20.0, max_value=30.0, step=0.5,
                 key="thg_price_escalation_per_year", disabled=not st.session_state.thg_enabled,
                 help=HELP["thg_price_escalation_per_year"],
                 format="%.1f%%",
@@ -1298,8 +1301,7 @@ with tabs[2]:
             )
         with c3:
             st.slider(
-                "Jährliche Preissteigerung [%/a]",
-                -20.0, 30.0, 0.5,
+                "Jährliche Preissteigerung [%/a]", min_value=-20.0, max_value=30.0, step=0.5,
                 key="balancing_energy_escalation_per_year",
                 disabled=not st.session_state.balancing_energy_enabled,
                 help=HELP["balancing_energy_escalation_per_year"],
@@ -1326,8 +1328,7 @@ with tabs[2]:
                 format="%.0f",
             )
             st.slider(
-                "Preisentwicklung Sonstige 1 [%/a]",
-                -20.0, 30.0, 0.5,
+                "Preisentwicklung Sonstige 1 [%/a]", min_value=-20.0, max_value=30.0, step=0.5,
                 key="other_revenue_1_escalation_per_year",
                 disabled=not st.session_state.other_revenues_enabled,
                 help=HELP["other_revenue_1_escalation_per_year"],
@@ -1343,8 +1344,7 @@ with tabs[2]:
                 format="%.0f",
             )
             st.slider(
-                "Preisentwicklung Sonstige 2 [%/a]",
-                -20.0, 30.0, 0.5,
+                "Preisentwicklung Sonstige 2 [%/a]", min_value=-20.0, max_value=30.0, step=0.5,
                 key="other_revenue_2_escalation_per_year",
                 disabled=not st.session_state.other_revenues_enabled,
                 help=HELP["other_revenue_2_escalation_per_year"],
@@ -2379,7 +2379,8 @@ with tabs[5]:
                     measure=["relative"] * len(bridge_nonzero) + ["total"],
                     x=bridge_nonzero["Komponente"].tolist() + ["LCOH"],
                     y=bridge_nonzero["€/kg H₂"].tolist() + [0.0],
-                    text=[f"{v:.2f}" for v in bridge_nonzero["€/kg H₂"]] + [f"{results['lcoh_eur_per_kg']:.2f}"],
+                    text=[de_number(v, 2) for v in bridge_nonzero["€/kg H₂"]]
+                    + [de_number(results["lcoh_eur_per_kg"], 2)],
                     textposition="outside",
                     connector={"line": {"width": 1}},
                 )
@@ -2415,7 +2416,7 @@ with tabs[5]:
                     go.Bar(
                         x=revenue_dist_df["Komponente"],
                         y=revenue_dist_df["€/a"] / 1e6,
-                        text=[f"{v/1e6:.2f}" for v in revenue_dist_df["€/a"]],
+                        text=[de_number(v / 1e6, 2) for v in revenue_dist_df["€/a"]],
                         textposition="outside",
                     )
                 )
