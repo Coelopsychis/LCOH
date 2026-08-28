@@ -853,13 +853,9 @@ with st.sidebar.expander("Simulation speichern / laden", expanded=False):
 # Hauptlayout
 # ============================================================
 
-st.title("Berechnungstool LCOH")
+st.title("LCOH-Berechnungstool")
 st.caption(
     "Tool zur Berechnung von Wasserstoffgestehungskosten (Levelised Cost of Hydrogen)"
-)
-st.caption(
-    "Tipp: Das ? an den Eingabefeldern erklärt Bedeutung, Bezugsgröße und Wirkung im Rechenmodell. "
-    "Das Tool kombiniert eine stündliche Betriebs- und Strommarktberechnung mit annualisierten Kosten, Förderungen und Erlösen."
 )
 
 tabs = st.tabs(
