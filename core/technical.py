@@ -9,7 +9,7 @@ JOULE_PER_KWH = 3_600_000.0
 KG_PER_TONNE = 1_000.0
 O2_KG_PER_KG_H2 = 8.0
 
-# Constants used explicitly in Excel Rev. 8 (sheet "3. Nebenrechnungen").
+# Thermodynamic constants used by the ideal-gas compressor calculation.
 H2_ISENTROPIC_EXPONENT = 1.41
 H2_SPECIFIC_GAS_CONSTANT_J_PER_KG_K = 4_124.0
 O2_ISENTROPIC_EXPONENT = 1.40
@@ -24,11 +24,11 @@ def compressor_specific_work_kwh_per_t(
     isentropic_exponent: float,
     specific_gas_constant_j_per_kg_k: float,
 ) -> dict:
-    """Excel-compatible ideal-gas compressor work.
+    """Calculate ideal and real specific compressor work for an ideal gas.
 
-    Rev. 8 calculates first the isentropic work in J/kg, converts it to kWh/t
-    and finally divides by the compressor efficiency. The pressure ratio is
-    dimensionless, so using bar for both inlet and outlet pressure is valid.
+    The isentropic work is calculated in J/kg, converted to kWh/t and divided by
+    the compressor efficiency. The pressure ratio is dimensionless, so inlet and
+    outlet pressure may both be provided in bar.
     """
     p_in = float(inlet_pressure_bar)
     p_out = float(outlet_pressure_bar)
@@ -46,8 +46,8 @@ def compressor_specific_work_kwh_per_t(
     if kappa <= 1:
         raise ValueError("Isentropenexponent muss größer als 1 sein.")
 
-    # A lower/equal outlet pressure does not require compression. Excel inputs
-    # are intended for p_out > p_in; returning zero is robust and physical.
+    # A lower or equal outlet pressure does not require compression; return zero
+    # instead of evaluating the compression equation outside its intended range.
     if p_out <= p_in:
         ideal_j_per_kg = 0.0
     else:
@@ -69,12 +69,12 @@ def compressor_specific_work_kwh_per_t(
 
 
 def compute_processing_design(inputs: ModelInputs, average_efficiency: float) -> dict:
-    """Design loads for H2/O2 treatment following Excel sheet 3/4.
+    """Calculate design loads for H₂ and O₂ treatment.
 
-    Excel derives the compressor design powers from H2 production at 100 %
-    electrolyzer load using the *average efficiency including degradation*.
-    Those loads are then added to the installed system power and scale linearly
-    with hourly system utilization.
+    Compressor design power is derived from H₂ production at 100 % electrolyzer
+    load using the average efficiency including degradation. These auxiliary
+    loads are added to installed system power and scale linearly with hourly
+    system utilization.
     """
     s = inputs.system
     c = inputs.capex
@@ -167,7 +167,12 @@ def compute_stack_schedule(inputs: ModelInputs, equivalent_full_load_hours: floa
 
 
 def compute_average_efficiency(inputs: ModelInputs, stack: dict) -> float:
-    """Linear degradation logic from workbook cell '3. Nebenrechnungen'!C29."""
+    """Return the average electrolyzer efficiency over one effective stack interval.
+
+    With at least one replacement, efficiency is averaged between fresh-stack
+    efficiency and the linearly degraded value immediately before replacement.
+    Without replacement, the end-of-project degraded efficiency is used.
+    """
     s = inputs.system
     eta0 = float(s.avg_efficiency_h2_per_el)
     deg = float(s.degradation_per_year)

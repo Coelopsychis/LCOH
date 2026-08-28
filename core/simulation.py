@@ -14,7 +14,7 @@ from core.technical import (
 
 
 def _average_escalation_multiplier(escalation: float, years: int) -> float:
-    """Excel nominal-average multiplier used for hourly market/CO2 series."""
+    """Return the average nominal escalation multiplier over the project lifetime."""
     if years <= 0 or escalation == 0:
         return 1.0
     return (((1.0 + escalation) ** years - 1.0) / escalation) / years
@@ -32,24 +32,21 @@ def _optional_series(ts: pd.DataFrame, column: str, default: float) -> np.ndarra
 def _build_dispatch_once(
     inputs: ModelInputs, ts: pd.DataFrame, processing_efficiency: float
 ) -> pd.DataFrame:
-    """Stündlicher Dispatch nach der Struktur von Excel Rev. 8.
+    """Calculate the hourly electricity dispatch.
 
-    Reihenfolge der Strombeschaffung (Blatt ``4. Bezüge und Verbräuche``):
+    Procurement priority is:
 
-    1. Baseload-/PV-/Wind-PPA
-    2. §7 Abs. 3 der 37. BImSchV, sofern die Preisbedingung erfüllt ist
-    3. §13k EnWG ("Nutzen statt Abregeln") bis zur verfügbaren Stundenmenge
-    4. Batteriespeicher (falls aktiviert)
-    5. unspezifischer Spotmarktbezug bis zur Volllast
+    1. Baseload, PV and wind PPAs
+    2. §7 Abs. 3 der 37. BImSchV when its price condition is satisfied
+    3. §13k EnWG ("Nutzen statt Abregeln") up to the hourly available amount
+    4. battery discharge when a battery is enabled
+    5. ordinary spot-market procurement up to full system load
 
-    Unterhalb der Mindestteillast wird das Elektrolyseursystem nicht betrieben.
-    Bereits beschaffte/vertraglich abgenommene Überschüsse können entsprechend
-    der Verkaufseinstellung veräußert werden.
-
-    Der Pfad ohne Batterie bildet die Excel-Formeln für §7/§13k direkt nach.
-    Bei aktivem Batteriespeicher werden auch die Excel-Spalten N:AH nachgebildet:
-    PPA-, §7- und §13k-Mengen können den Speicher laden, die Entladung erfolgt
-    vor dem normalen Spotbezug. Rev. 8 modelliert dabei keine Speicherverluste.
+    The plant is switched off below its minimum-load threshold. Procured energy
+    that is not consumed or stored can be marketed according to the configured
+    sales mode. PPA, §7 and §13k energy may charge the battery; discharge occurs
+    before ordinary spot procurement. Battery charge/discharge losses are not
+    modeled.
     """
     validate_timeseries(ts)
 
@@ -70,9 +67,8 @@ def _build_dispatch_once(
     n = len(ts)
     years = int(inputs.system.project_lifetime_years)
 
-    # Excel '8. Marktpreise'!Q: die kostenseitige Preisentwicklung wird bereits
-    # auf die stündliche Spotpreisreihe angewendet. Dadurch beeinflusst sie auch
-    # die Dispatch-/Grenzpreisentscheidung und nicht nur die Jahreskosten.
+    # Apply the average project-lifetime price escalation directly to the hourly
+    # spot series so it affects both procurement cost and dispatch thresholds.
     raw_spot_price = ts["day_ahead_eur_per_mwh"].to_numpy(dtype=float)
     spot_multiplier = _average_escalation_multiplier(
         power.spot_price_escalation_per_year, years
@@ -84,7 +80,7 @@ def _build_dispatch_once(
         _optional_series(ts, "section13k_kwh", 0.0), 0.0
     )
 
-    # §7: CO2-Grenzpreis nach Excel '8. Marktpreise' Spalten H:O.
+    # §7 eligibility uses the CO₂-based threshold with the configured minimum cap.
     co2_multiplier = _average_escalation_multiplier(
         power.section7_co2_price_escalation_per_year, years
     )
@@ -126,9 +122,9 @@ def _build_dispatch_once(
     )
     ppa_available_kwh = baseload_available_kwh + pv_available_kwh + wind_available_kwh
 
-    # Excel C46:C48: capacity uses the rounded-up installed system power; the
-    # user input C48 is the maximum battery *input* power. Discharge power is
-    # limited by the electrolyzer-system power itself (sheet 4, column Z).
+    # Battery capacity is the configured capacity factor times rounded-up installed
+    # system power. The entered battery power limits charging; discharge is limited
+    # by total installed system power.
     battery_system_power_kw = float(np.ceil(system_kw)) if capex.battery_enabled else 0.0
     battery_capacity_kwh = (
         capex.battery_capacity_factor_kwh_per_kw * battery_system_power_kw
@@ -152,7 +148,7 @@ def _build_dispatch_once(
     battery_soc_kwh = np.zeros(n, dtype=float)
 
     if not battery_active:
-        # Exact Excel order for the no-battery case.
+        # Without storage, procurement follows PPA → §7 → §13k → spot.
         missing_after_ppa = np.maximum(system_kw - ppa_available_kwh, 0.0)
         if power.section7_enabled:
             section7_purchase_kwh = np.where(
@@ -170,7 +166,7 @@ def _build_dispatch_once(
         missing_to_full_load = np.maximum(system_kw - before_spot, 0.0)
         if power.spot_purchase_enabled:
             if power.spot_purchase_price_limit_enabled:
-                # Excel uses a strict '<' comparison for the normal Spotbezug.
+                # The maximum spot-purchase price is an exclusive upper bound.
                 spot_allowed = spot_price < power.spot_purchase_price_limit_eur_per_mwh
             else:
                 spot_allowed = np.ones(n, dtype=bool)
@@ -182,27 +178,26 @@ def _build_dispatch_once(
         system_consumption_kwh = utilization * system_kw
 
     else:
-        # Excel battery path (sheet 4, columns N:AH). The workbook has no
-        # explicit charge/discharge losses. C48 is the maximum charging input
-        # power; discharge is limited by the installed system power. The Excel
-        # logic can also procure §7/§13k electricity specifically for charging.
+        # Storage dispatch has no explicit charge/discharge losses. Charging is
+        # limited by the configured battery input power, discharge by installed
+        # system power, and §7/§13k procurement may also be used to charge storage.
         utilization = np.zeros(n, dtype=float)
         system_consumption_kwh = np.zeros(n, dtype=float)
         soc = 0.0
 
         for i in range(n):
-            ppa = float(ppa_available_kwh[i])  # Excel L
+            ppa = float(ppa_available_kwh[i])
             prev_soc = soc
             prev_soc_fraction = (
                 prev_soc / battery_capacity_kwh if battery_capacity_kwh > 0 else 0.0
             )
 
-            # Excel N: PPA surplus that can directly charge the battery.
+            # PPA surplus above system demand can directly charge the battery.
             ppa_charge = min(
                 battery_input_power_kw, max(ppa - system_kw, 0.0)
             )
 
-            # Excel O: battery-specific loading ratio used to size §7 purchases.
+            # Ratio used to limit additional §7 procurement for battery charging.
             ppa_ratio_for_battery = min(
                 ppa / battery_input_power_kw, 1.0
             ) if battery_input_power_kw > 0 else 0.0
@@ -210,7 +205,7 @@ def _build_dispatch_once(
             s7 = 0.0
             if power.section7_enabled and section7_eligible[i]:
                 if i == 0:
-                    # First workbook row has no previous SOC reference.
+                    # At the first hour there is no previous state of charge.
                     s7 = min(
                         max((1.0 - ppa_ratio_for_battery) * battery_input_power_kw, 0.0),
                         max(battery_input_power_kw - ppa, 0.0),
@@ -221,7 +216,7 @@ def _build_dispatch_once(
                         max(system_kw + (battery_capacity_kwh - prev_soc) - ppa, 0.0),
                     )
 
-            after_s7 = ppa + s7  # Excel S
+            after_s7 = ppa + s7
             s7_charge = min(
                 max(
                     0.0,
@@ -243,7 +238,7 @@ def _build_dispatch_once(
                         max(system_kw - after_s7 + battery_capacity_kwh - prev_soc, 0.0),
                     )
 
-            before_battery_discharge = after_s7 + s13  # Excel W
+            before_battery_discharge = after_s7 + s13
 
             if i == 0:
                 s13_charge = max(
@@ -260,9 +255,9 @@ def _build_dispatch_once(
                     max(battery_capacity_kwh - prev_soc, 0.0),
                 )
 
-            # Excel Z: discharge before the ordinary spot purchase. If generic
-            # spot procurement is disabled, a low SOC + low supply combination
-            # is deliberately not discharged below the minimum-load threshold.
+            # Storage discharges before ordinary spot procurement. If generic spot
+            # procurement is disabled, a low-SOC/low-supply situation does not
+            # discharge when the resulting supply would remain below minimum load.
             if i == 0:
                 discharge = 0.0
             else:
@@ -303,8 +298,9 @@ def _build_dispatch_once(
                 else 0.0
             )
 
-            # Excel Y: total battery charging. The special low-load/negative-
-            # price branch stores the PPA quantity even when the system is off.
+            # Total storage charging includes PPA, §7 and §13k charging. In the
+            # low-load/negative-price branch, available PPA energy is stored even
+            # while the process itself remains switched off.
             if i == 0:
                 charge = (
                     ppa + ppa_charge + s7_charge + s13_charge
@@ -317,11 +313,10 @@ def _build_dispatch_once(
             ):
                 charge = ppa
             else:
-                # Excel Y (rows >= 15) contains a slightly asymmetric IF:
-                # when AG=0, L+N+T+X is used only to decide whether the free
-                # storage capacity is exceeded. If it is not exceeded, the
-                # returned charge is still MIN(V4-C5, N+T+X). We reproduce
-                # that workbook behavior literally for regression parity.
+                # The charging rule is intentionally asymmetric when process demand
+                # is zero: total PPA plus dedicated charging flows are used only
+                # for the free-capacity comparison; otherwise the accepted charge
+                # is limited to the dedicated charging flows and input-power headroom.
                 normal_charge = min(
                     battery_input_power_kw - system_kw,
                     ppa_charge + s7_charge + s13_charge,
@@ -372,16 +367,14 @@ def _build_dispatch_once(
 
     ppa_used_kwh = baseload_used_kwh + pv_used_kwh + wind_used_kwh
 
-    # In the workbook the surplus is procurement minus actual consumption minus
-    # battery charging. This allows surplus from all enabled procurement routes
-    # to be marketed, not only PPA surplus.
+    # Marketable surplus is total procurement minus process consumption and
+    # battery charging, so surplus from every enabled procurement route can be sold.
     gross_surplus_kwh = np.maximum(
         total_procured_kwh - system_consumption_kwh - battery_charge_kwh, 0.0
     )
 
-    # Excel C206/C207: Überschussstrom wird entweder am Spotmarkt oder per
-    # PPA verkauft. Im PPA-Modus wird die gesamte übrige Strommenge verkauft;
-    # die Bewertung mit dem PPA-Verkaufspreis erfolgt in finance.py.
+    # Surplus electricity is sold either on the spot market or at the configured
+    # PPA sale price. In PPA mode the entire remaining surplus is sold.
     spot_sale_kwh = np.zeros(n, dtype=float)
     ppa_sale_kwh = np.zeros(n, dtype=float)
     if power.spot_sale_enabled:
@@ -417,9 +410,9 @@ def _build_dispatch_once(
         + oxygen_compressor_consumption_kwh
     )
 
-    # Procurement costs. PPA/§13k escalation is applied as an annual-average in
-    # finance.py. Spot and §7 use the already escalated hourly market price just
-    # like the workbook's market-price sheet.
+    # Procurement costs: PPA and §13k escalation is applied later as an average
+    # project-lifetime multiplier; spot and §7 use the already escalated hourly
+    # market-price series from the dispatch calculation.
     baseload_cost_eur = baseload_available_kwh * power.baseload_price_eur_per_mwh / 1000.0
     pv_ppa_cost_eur = pv_available_kwh * power.ppa_pv_price_eur_per_mwh / 1000.0
     wind_ppa_cost_eur = wind_available_kwh * power.ppa_wind_price_eur_per_mwh / 1000.0
@@ -428,7 +421,7 @@ def _build_dispatch_once(
         section13k_purchase_kwh * power.section13k_price_eur_per_mwh / 1000.0
     )
     spot_purchase_cost_eur = spot_purchase_kwh * spot_price / 1000.0
-    # Excel market-sale price clips negative market prices to zero.
+    # Spot-sale revenue is floored at zero when the hourly market price is negative.
     spot_sale_revenue_eur = spot_sale_kwh * np.maximum(spot_price, 0.0) / 1000.0
 
     procurement_cost_eur = (
@@ -493,13 +486,12 @@ def _build_dispatch_once(
 
 
 def build_dispatch(inputs: ModelInputs, ts: pd.DataFrame) -> pd.DataFrame:
-    """Build dispatch with an Excel-compatible efficiency/processing fixed point.
+    """Build dispatch while solving the efficiency/auxiliary-load coupling.
 
-    Compressor design power in Rev. 8 depends on the average degraded Ely
-    efficiency, while stack degradation depends on equivalent full-load hours.
-    The workbook breaks that relationship through helper cells/manual transfer;
-    here we solve the same relationship iteratively and converge to the same
-    stable stack interval for normal scenarios.
+    Compressor design power depends on average degraded electrolyzer efficiency,
+    while stack degradation depends on equivalent full-load hours produced by the
+    dispatch. The circular dependency is solved iteratively until the efficiency
+    and resulting stack interval converge.
     """
     eta = float(inputs.system.avg_efficiency_h2_per_el)
     dispatch = None
@@ -598,7 +590,7 @@ def compute_operation_kpis(
         design.get("system_power_kw", inputs.system.system_power_kw)
     )
     battery_capacity_kwh = float(dispatch.attrs.get("battery_capacity_kwh", 0.0))
-    # Excel KPI F51 / sheet4 V5: ROUNDUP(total procured energy / capacity).
+    # Report storage turnovers as ceil(total procured annual energy / storage capacity).
     battery_cycles_per_year = (
         int(np.ceil(total_procured_kwh / battery_capacity_kwh))
         if battery_capacity_kwh > 0

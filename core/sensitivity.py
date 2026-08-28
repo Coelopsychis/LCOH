@@ -17,7 +17,7 @@ class SensitivityParameter:
     description: str
 
 
-EXCEL_SENSITIVITY_PARAMETERS = (
+SENSITIVITY_PARAMETERS = (
     SensitivityParameter(
         "thg_quote",
         "THG-Quote",
@@ -55,7 +55,7 @@ EXCEL_SENSITIVITY_PARAMETERS = (
     ),
 )
 
-PARAMETER_BY_KEY = {p.key: p for p in EXCEL_SENSITIVITY_PARAMETERS}
+PARAMETER_BY_KEY = {p.key: p for p in SENSITIVITY_PARAMETERS}
 
 # Central defaults used by both the Streamlit widgets and the calculation
 # helpers. Keeping them here prevents UI/calculation drift.
@@ -66,9 +66,8 @@ DEFAULT_SENSITIVITY_PARAMETER = "electricity_price"
 
 
 def _safe_factor(relative_change: float) -> float:
-    # Negative prices/rates created solely by a sensitivity factor are not
-    # meaningful for this UI. Excel normally uses only +/-30 %, so this mainly
-    # protects custom ranges entered in Streamlit.
+    # Prevent a sensitivity factor from turning quantities such as prices or
+    # interest rates negative. This mainly protects user-defined wide ranges.
     return max(1.0 + float(relative_change), 0.0)
 
 
@@ -100,7 +99,7 @@ def _annual_cost_from_components(
     )
 
 
-def compute_excel_sensitivity_lcoh(
+def compute_sensitivity_lcoh(
     inputs: ModelInputs,
     base_results: dict,
     parameter_key: str,
@@ -139,9 +138,9 @@ def compute_excel_sensitivity_lcoh(
         return annual / h2
 
     if parameter_key == "capex":
-        # All debt/equity annuities are linear in the financed capital for fixed
-        # rates and lifetime, so scaling the financing term exactly reproduces
-        # the workbook's CAPEX sensitivity.
+        # With fixed rates and lifetime, debt and equity annuities scale linearly
+        # with financed capital. CAPEX sensitivity therefore scales only the
+        # financing contribution while leaving OPEX and stack costs unchanged.
         annual = _annual_cost_from_components(
             base_results,
             financing=float(base_results["financing_eur_per_year"]) * factor,
@@ -200,8 +199,8 @@ def compute_excel_sensitivity_lcoh(
             inputs, varied_flh
         )["stack_replacement_eur_per_year"]
 
-        # Excel scales these energy/production-linked revenues with FLH. Fixed
-        # balancing/miscellaneous revenues remain unchanged.
+        # Production- and energy-linked revenues scale with full-load hours.
+        # Fixed annual balancing-energy and miscellaneous revenues remain unchanged.
         linked_revenues = (
             float(base_results["thg_revenue_eur_per_year"])
             + float(base_results["power_sale_revenue_eur_per_year"])
@@ -233,11 +232,11 @@ def compute_tornado(
 ) -> pd.DataFrame:
     base_lcoh = float(base_results["lcoh_eur_per_kg"])
     rows = []
-    for parameter in EXCEL_SENSITIVITY_PARAMETERS:
-        minus = compute_excel_sensitivity_lcoh(
+    for parameter in SENSITIVITY_PARAMETERS:
+        minus = compute_sensitivity_lcoh(
             inputs, base_results, parameter.key, -relative_range
         )
-        plus = compute_excel_sensitivity_lcoh(
+        plus = compute_sensitivity_lcoh(
             inputs, base_results, parameter.key, relative_range
         )
         rows.append(
@@ -269,7 +268,7 @@ def compute_sensitivity_curve(
         changes = np.sort(np.append(changes, 0.0))
 
     values = [
-        compute_excel_sensitivity_lcoh(inputs, base_results, parameter_key, change)
+        compute_sensitivity_lcoh(inputs, base_results, parameter_key, change)
         for change in changes
     ]
     base_lcoh = float(base_results["lcoh_eur_per_kg"])

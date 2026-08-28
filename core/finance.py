@@ -16,7 +16,7 @@ from core.technical import (
 
 
 def annuity_factor(rate: float, years: float) -> float:
-    """Excel-compatible annuity factor."""
+    """Return the standard annuity factor for a constant annual interest rate."""
     if years <= 0:
         return 0.0
     if rate == 0:
@@ -26,11 +26,11 @@ def annuity_factor(rate: float, years: float) -> float:
 
 def average_escalated_value(base_value: float, escalation: float, years: int) -> float:
     """
-    Average nominal value over the project lifetime, matching the workbook formula:
+    Return the average nominal value over the project lifetime:
 
         base / years * (((1 + escalation) ** years - 1) / escalation)
 
-    For escalation == 0 Excel simply uses the base value.
+    For zero escalation the base value is returned unchanged.
     """
     if years <= 0:
         return 0.0
@@ -40,7 +40,7 @@ def average_escalated_value(base_value: float, escalation: float, years: int) ->
 
 
 def compute_capex_subsidy(inputs: ModelInputs, gross_capex_eur: float) -> dict:
-    """Excel F169/F170: CAPEX grant and equal annual allocation."""
+    """Calculate total CAPEX subsidy and its straight-line annual equivalent."""
     f = inputs.funding
     ely_kw = inputs.system.electrolyzer_power_kw
     years = inputs.system.project_lifetime_years
@@ -62,7 +62,7 @@ def compute_capex_subsidy(inputs: ModelInputs, gross_capex_eur: float) -> dict:
 def compute_opex_subsidy(
     inputs: ModelInputs, annual_h2_kg: float, equivalent_full_load_hours: float
 ) -> float:
-    """Excel F174: annual OPEX subsidy."""
+    """Calculate the annual OPEX subsidy from the selected funding basis."""
     f = inputs.funding
     if f.opex_mode == "per_kg":
         return annual_h2_kg * f.opex_eur_per_kg_h2
@@ -72,18 +72,18 @@ def compute_opex_subsidy(
 
 
 def compute_electricity_subsidy(inputs: ModelInputs, op_kpis: dict) -> float:
-    """Excel F179: annual electricity-price subsidy."""
+    """Calculate the annual electricity subsidy from H₂ output or system consumption."""
     f = inputs.funding
     if f.electricity_mode == "per_kg":
         return op_kpis["annual_h2_kg"] * f.electricity_eur_per_kg_h2
     if f.electricity_mode == "per_mwh":
-        # Excel uses sheet 4 AB5 / 1000: consumed system electricity, not procurement.
+        # The MWh-based subsidy applies to consumed system electricity, not gross procurement.
         return op_kpis["annual_system_mwh"] * f.electricity_eur_per_mwh
     return 0.0
 
 
 def compute_strompreiskompensation(inputs: ModelInputs, op_kpis: dict) -> dict:
-    """Excel sheet 3 L20/K22:K27 Strompreiskompensation (SPK)."""
+    """Calculate Strompreiskompensation (SPK) from EUA price and eligible consumption."""
     f = inputs.funding
     years = inputs.system.project_lifetime_years
 
@@ -96,7 +96,7 @@ def compute_strompreiskompensation(inputs: ModelInputs, op_kpis: dict) -> dict:
         years,
     )
 
-    # Fixed workbook factors from '3. Nebenrechnungen' K22/K23/K25.
+    # Fixed policy factors used by the SPK calculation.
     aid_intensity = 0.75
     co2_factor_t_per_mwh = 0.72
     fallback_factor = (0.8 + (0.8 - 0.0109 * years)) / 2.0
@@ -170,7 +170,7 @@ def compute_capex(
     )
     h2_treatment_cost = ely_kw * h2_treatment_specific
 
-    # Excel F46/F47: ROUNDUP(installed system power) * capacity factor.
+    # Battery capacity uses rounded-up installed system power times the capacity factor.
     battery_system_power_kw = (
         float(math.ceil(design["system_power_kw"])) if c.battery_enabled else 0.0
     )
@@ -236,7 +236,7 @@ def compute_capex(
 
 
 def compute_financing(inputs: ModelInputs, capex: dict) -> dict:
-    """Replicates Excel C161:C165: separate debt and equity annuities."""
+    """Annualize debt and equity separately and report their combined financing cost."""
     s = inputs.system
     c = inputs.capex
     total_capex = capex["total_capex_eur"]
@@ -251,7 +251,7 @@ def compute_financing(inputs: ModelInputs, capex: dict) -> dict:
     equity_annuity = equity_eur * annuity_factor(c.equity_interest_rate, s.project_lifetime_years)
     financing_total = debt_annuity + equity_annuity
 
-    # Excel KPI only; it is NOT used as the LCOH discount/annuity rate.
+    # WACC is reported as an informational KPI; it is not used as the LCOH annuity rate.
     wacc = (
         equity_share * c.equity_interest_rate
         + debt_share * c.debt_interest_rate * (1.0 - c.corporate_tax_rate)
@@ -273,7 +273,7 @@ def compute_financing(inputs: ModelInputs, capex: dict) -> dict:
 
 
 def compute_stack_replacement(inputs: ModelInputs, equivalent_full_load_hours: float) -> dict:
-    """Replicates the workbook's '6. Stacktausch' base-case logic."""
+    """Calculate stack replacement count, cost degression and annual financing burden."""
     s = inputs.system
     c = inputs.capex
 
@@ -282,8 +282,8 @@ def compute_stack_replacement(inputs: ModelInputs, equivalent_full_load_hours: f
     replacement_count = schedule["stack_replacement_count"]
     replacement_interval_years = schedule["stack_replacement_interval_years"]
 
-    # Excel: 1 - (1 + cost_degression)^((project_lifetime - 2)/2), then
-    # base stack cost * (1 - scale effect). Algebraically this is base * (...).
+    # Approximate the average replacement-specific cost by applying cost
+    # degression to the midpoint of the project lifetime (offset by one year).
     avg_stack_specific = (
         c.stack_replacement_share_of_ely_capex
         * c.electrolyzer_invest_eur_per_kw
@@ -298,8 +298,8 @@ def compute_stack_replacement(inputs: ModelInputs, equivalent_full_load_hours: f
         reserve_amount = 0.0
         financing_amount = 0.0
     else:
-        # Workbook base case splits the lifetime in half: provisions before the
-        # replacement and financing after it.
+        # Split replacement funding into a reserve accumulated before the
+        # representative replacement and financed capital paid afterward.
         reserve_years = project_years / 2.0
         financing_years = project_years - reserve_years
         reserve_amount = stack_replacement_total / (project_years / reserve_years)
@@ -327,15 +327,14 @@ def compute_opex(
     annual_h2_kg: float,
     equivalent_full_load_hours: float,
 ) -> dict:
-    """OPEX calculation matching Excel Rev. 8 C131:C156.
+    """Calculate detailed or lump-sum annual operating expenditure.
 
-    Detailed OPEX is based on CAPEX *before* CAPEX subsidy (sheet 3 G5).
-    The optional lump-sum OPEX uses CAPEX *after* CAPEX subsidy (sheet 2 G19).
+    Detailed OPEX is based on CAPEX before CAPEX subsidy. The optional lump-sum
+    OPEX is based on CAPEX after CAPEX subsidy.
 
-    Rev. 8 contains one notable quirk: F174 (OPEX subsidy) is deducted only in
-    the lump-sum OPEX branch. In detailed mode it is displayed in the funding
-    summary but does not reduce G131/LCOH. This is intentionally preserved for
-    Excel compatibility.
+    A deliberate model convention is retained: an OPEX subsidy reduces LCOH only
+    in lump-sum OPEX mode. In detailed mode it is reported in the funding summary
+    but is not deducted from annual OPEX.
     """
     o = inputs.opex
     years = inputs.system.project_lifetime_years
@@ -362,8 +361,8 @@ def compute_opex(
     )
     reserves_total = reserve_remaining_plant + reserve_decommissioning
 
-    # Excel water balance: 9 kg water/kg H2 * factor 2 fresh water; wastewater
-    # is only the stoichiometric 9 kg/kg H2. Density is treated as 1000 kg/m3.
+    # Water balance assumes 18 kg fresh water and 9 kg wastewater per kg H₂.
+    # Water density is treated as 1000 kg/m³.
     freshwater_m3 = annual_h2_kg * 9.0 * 2.0 / 1000.0
     wastewater_m3 = annual_h2_kg * 9.0 / 1000.0
     water_base = (
@@ -432,10 +431,10 @@ def compute_opex(
 
 
 def _active_variable_power_surcharges_eur_per_mwh(inputs: ModelInputs, *, electrolyzer: bool) -> dict:
-    """Return active variable electricity add-ons exactly like workbook sheet 5.
+    """Return active variable electricity add-ons in €/MWh.
 
-    Excel converts ct/kWh to €/MWh with ``* 1000 / 100`` (= *10) and
-    sets a component to zero when the corresponding privilege/exemption is on.
+    Rates entered in ct/kWh are converted with a factor of 10. A component is
+    set to zero whenever the corresponding exemption is enabled.
     """
     e = inputs.electricity_costs
     prefix = "electrolyzer" if electrolyzer else "rest"
@@ -456,14 +455,13 @@ def _active_variable_power_surcharges_eur_per_mwh(inputs: ModelInputs, *, electr
 
 
 def compute_electricity_costs(inputs: ModelInputs, op_kpis: dict) -> dict:
-    """Electricity procurement + add-ons following workbook sheet ``5. Strompreis``."""
+    """Calculate electricity procurement costs, surcharges, demand charges and subsidies."""
     p = inputs.power
     e = inputs.electricity_costs
     years = inputs.system.project_lifetime_years
 
-    # PPA and §13k are averaged nominally over the project lifetime. Spot and
-    # §7 have already received cost-side escalation on the hourly series in the
-    # dispatch, mirroring workbook sheet 8.
+    # PPA and §13k prices are nominally averaged over the project lifetime.
+    # Spot and §7 prices already include cost-side escalation in hourly dispatch.
     annual_baseload_cost = average_escalated_value(
         op_kpis["annual_baseload_cost_eur"], p.baseload_price_escalation_per_year, years
     )
@@ -538,7 +536,7 @@ def compute_electricity_costs(inputs: ModelInputs, op_kpis: dict) -> dict:
     total_addons_cost = ely_addons_cost + rest_addons_cost
     total_power_cost_gross = procurement_cost + total_addons_cost
 
-    # Excel F184: savings from privileges = cost without any exemptions - current cost.
+    # Privilege savings compare variable electricity charges without exemptions to active charges.
     all_variable_surcharge = (
         e.grid_fee_ct_per_kwh
         + e.electricity_tax_ct_per_kwh
@@ -547,9 +545,8 @@ def compute_electricity_costs(inputs: ModelInputs, op_kpis: dict) -> dict:
         + e.stromnev19_levy_ct_per_kwh
         + e.offshore_levy_ct_per_kwh
     ) * 10.0
-    # Excel F184 references sheet-5 AE29 - V29. Those cells compare only the
-    # consumption-based electricity prices and intentionally exclude the
-    # separate demand-charge rows. Preserve that exact definition here.
+    # The savings KPI covers consumption-based electricity charges only and
+    # intentionally excludes separate demand-charge components.
     no_privilege_ely_variable_cost = annual_ely_mwh * all_variable_surcharge
     no_privilege_rest_variable_cost = annual_rest_mwh * all_variable_surcharge
     privilege_savings = (
@@ -561,8 +558,8 @@ def compute_electricity_costs(inputs: ModelInputs, op_kpis: dict) -> dict:
     power_subsidy = compute_electricity_subsidy(inputs, op_kpis)
     total_power_cost_after_subsidy = total_power_cost_gross - power_subsidy
 
-    # Stromhandel Excel C206:C209 / Blatt 5 V31:V32. Die einnahmeseitige
-    # Preisentwicklung C209 gilt sowohl für Spot- als auch PPA-Verkauf.
+    # The configured sales-price escalation applies to both spot and PPA
+    # electricity sales.
     annual_spot_sale_revenue = average_escalated_value(
         op_kpis["annual_spot_sale_revenue_eur"],
         p.spot_sale_price_escalation_per_year,
@@ -638,7 +635,7 @@ def compute_electricity_costs(inputs: ModelInputs, op_kpis: dict) -> dict:
     }
 
 def _average_thg_reduction_quota(commissioning_year: int, project_years: int) -> float:
-    """Workbook logic from '3. Nebenrechnungen'!O6."""
+    """Calculate the project-average THG reduction quota used for crediting."""
     if project_years <= 0:
         return 0.0
     if commissioning_year >= 2030:
@@ -649,9 +646,9 @@ def _average_thg_reduction_quota(commissioning_year: int, project_years: int) ->
     pre_2030_sum = sum(
         quota for year, quota in quotas.items() if commissioning_year <= year <= 2029
     )
-    # Exact workbook formula O6: first an average of the remaining pre-2030
-    # quotas, then that average plus 25.1% for each remaining project year,
-    # divided once more by the full project lifetime.
+    # For commissioning before 2030, first average the remaining statutory
+    # pre-2030 quotas, then combine that value with 25.1 % for later project
+    # years and normalize over the full project lifetime.
     pre_2030_average = pre_2030_sum / years_until_2030
     remaining_years = max(project_years - years_until_2030, 0)
     return (pre_2030_average + remaining_years * 0.251) / project_years
@@ -684,8 +681,8 @@ def compute_revenues(inputs: ModelInputs, annual_h2_kg: float, op_kpis: dict) ->
         )
         thg_revenue = thg_reduction_tco2 * avg_thg_price * r.thg_revenue_share
 
-    # Oxygen by-product: Excel sheet 3 K6/K7. 8 kg O2 are produced per kg H2;
-    # revenue is only enabled when the oxygen system is selected in CAPEX.
+    # Oxygen by-product assumes 8 kg O₂ per kg H₂. Revenue is only enabled when
+    # the oxygen system is included in CAPEX.
     annual_oxygen_kg = annual_h2_kg * O2_KG_PER_KG_H2
     annual_oxygen_t = annual_oxygen_kg / KG_PER_TONNE
     avg_oxygen_price = average_escalated_value(
@@ -695,10 +692,9 @@ def compute_revenues(inputs: ModelInputs, annual_h2_kg: float, op_kpis: dict) ->
         annual_oxygen_t * avg_oxygen_price if c.oxygen_enabled else 0.0
     )
 
-    # Waste heat follows Excel sheet 3 K11:K18 exactly. Note that Rev. 8
-    # evaluates compressor waste heat from the *isentropic* work and the H2
-    # production mass; for O2 it does not multiply by the O2/H2 mass factor.
-    # This looks unusual physically but is intentionally kept for compatibility.
+    # Compressor waste heat is estimated from isentropic specific work and H₂
+    # production mass. The O₂ term deliberately uses H₂ mass rather than the
+    # O₂/H₂ mass factor; this is a model convention retained for result continuity.
     avg_efficiency = float(op_kpis["average_efficiency_h2_per_el"])
     ely_waste_heat_mwh = (
         op_kpis["annual_ely_kwh"] * max(1.0 - avg_efficiency, 0.0) / 1000.0
@@ -737,12 +733,12 @@ def compute_revenues(inputs: ModelInputs, annual_h2_kg: float, op_kpis: dict) ->
         else 0.0
     )
 
-    # Electricity sale revenue is a separate line in workbook G196. The
-    # electricity-cost function already applies the Excel sales-side escalation.
+    # Electricity-sale revenue is calculated in the electricity-cost module,
+    # including the configured sales-side price escalation.
     power_sale_revenue = op_kpis["annual_power_revenue_eur"]
 
-    # Regelenergie: Excel C221:C223 -> Nebenrechnungen C49/L29. Rev. 8 uses a
-    # user-calculated annual revenue rather than an hourly reserve-market model.
+    # Balancing-energy revenue is modeled as an externally estimated annual
+    # amount rather than through an hourly reserve-market simulation.
     balancing_energy_revenue = (
         average_escalated_value(
             r.balancing_energy_revenue_eur_per_year,
@@ -752,9 +748,9 @@ def compute_revenues(inputs: ModelInputs, annual_h2_kg: float, op_kpis: dict) ->
         if r.balancing_energy_enabled else 0.0
     )
 
-    # Two independently escalating miscellaneous revenue positions, jointly
-    # activated by Excel C226. Keep the legacy lump value for backwards
-    # compatibility with older Python configurations, but do not expose it in UI.
+    # Two miscellaneous annual revenue positions can escalate independently.
+    # A legacy lump-sum field remains readable for older saved configurations but
+    # is not exposed in the UI.
     other_revenue_1 = (
         average_escalated_value(
             r.other_revenue_1_eur_per_year,
@@ -818,8 +814,8 @@ def compute_lcoh(inputs: ModelInputs, dispatch) -> dict:
     avg_efficiency = compute_average_efficiency(inputs, stack)
     op_kpis = compute_operation_kpis(inputs, dispatch, efficiency_override=avg_efficiency)
 
-    # Battery capacity and therefore CAPEX depend on installed system power,
-    # which includes H2/O2 compressor design loads in Excel Rev. 8.
+    # Battery capacity and CAPEX depend on installed system power, including
+    # H₂ and O₂ compressor design loads.
     capex = compute_capex(inputs, average_efficiency=avg_efficiency)
     financing = compute_financing(inputs, capex)
     opex = compute_opex(
@@ -834,9 +830,9 @@ def compute_lcoh(inputs: ModelInputs, dispatch) -> dict:
     revenues = compute_revenues(inputs, op_kpis["annual_h2_kg"], op_kpis)
     spk = compute_strompreiskompensation(inputs, op_kpis)
 
-    # Excel G167: informational annual total of grants/privileges/SPK. CAPEX
-    # funding is annualized only for this KPI; its LCOH effect occurs through
-    # the reduced financed CAPEX.
+    # The funding-summary KPI adds annualized CAPEX support, calculated OPEX and
+    # electricity subsidies, privilege savings and SPK. CAPEX support affects
+    # LCOH through the reduced financed CAPEX, not through an extra annual deduction.
     annual_funding_total = (
         capex["capex_subsidy_eur_per_year"]
         + opex["opex_subsidy_calculated_eur_per_year"]
@@ -845,9 +841,9 @@ def compute_lcoh(inputs: ModelInputs, dispatch) -> dict:
         + spk["spk_revenue_eur_per_year"]
     )
 
-    # Workbook F3: (Stack + OPEX + G59 + financing - F189 - G196) / H2.
-    # G59 already contains the electricity-price subsidy; CAPEX subsidy is
-    # already reflected in financing; SPK is subtracted separately.
+    # LCOH numerator = stack replacement + OPEX + electricity cost after subsidy
+    # + financing - SPK - other revenues. CAPEX subsidy is already reflected in
+    # the financed CAPEX and must not be deducted again here.
     annual_costs_before_revenues = (
         stack["stack_replacement_eur_per_year"]
         + opex["total_opex_eur_per_year"]

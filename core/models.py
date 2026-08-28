@@ -9,15 +9,15 @@ class SystemInputs:
     project_lifetime_years: int = 20
 
     electrolyzer_power_kw: float = 25_000.0
-    # Excel C105: Stromverbrauch Peripherie relativ zum Ely-Verbrauch.
-    # Die Systemleistung wird daraus berechnet: P_system = P_ely * (1 + Anteil Peripherie).
+    # Stromverbrauch der Peripherie relativ zur Elektrolyseurleistung.
+    # Die einfache Systemleistungs-Eigenschaft verwendet P_system = P_ely * (1 + Anteil).
     peripheral_power_fraction: float = 0.20
     min_load_fraction: float = 0.20
 
-    # Nennwirkungsgrad des Elektrolyseurs (Excel C9).
+    # Nennwirkungsgrad des Elektrolyseurs bezogen auf H₂-Energie zu elektrischem Einsatz.
     avg_efficiency_h2_per_el: float = 0.70
 
-    # Excel C124/C125: Stacklebensdauer in Betriebsstunden und lineare
+    # Stacklebensdauer in äquivalenten Betriebsstunden und lineare
     # Wirkungsgraddegradation in Prozentpunkten pro Kalenderjahr.
     stack_lifetime_hours: float = 60_000.0
     degradation_per_year: float = 0.01
@@ -29,14 +29,15 @@ class SystemInputs:
 
 @dataclass
 class CapexInputs:
-    # Elektrolyseur und allgemeine CAPEX (Excel C7, C23, C26, C29/C30)
+    # Elektrolyseur und allgemeine spezifische Investitionskosten.
     electrolyzer_invest_eur_per_kw: float = 1_000.0
     epc_eur_per_kw: float = 125.0
     bop_eur_per_kw: float = 750.0
     hochbau_eur_per_kw: float = 1_000.0
     tiefbau_eur_per_kw: float = 300.0
 
-    # Individuelle CAPEX entsprechen Excel C54 + C55 * C7 + C56 / C6.
+    # Individuelle CAPEX setzen sich aus einem spezifischen Betrag, einem Anteil
+    # der Elektrolyseurkosten und einem absoluten Fixbetrag zusammen.
     individual_specific_eur_per_kw: float = 50.0
     individual_ely_cost_share: float = 0.015
     individual_fixed_eur: float = 0.0
@@ -49,12 +50,12 @@ class CapexInputs:
     oxygen_enabled: bool = False
     oxygen_system_eur_per_kw: float = 30.0
 
-    # H2-Aufbereitung: Excel berücksichtigt auch bei direkter Nutzung ein System.
+    # H₂-Aufbereitung: Auch bei direkter Nutzung kann ein separates Übergabe-/Aufbereitungssystem angesetzt werden.
     compression_enabled: bool = False
     compressor_system_eur_per_kw: float = 30.0
     h2_direct_system_eur_per_kw: float = 10.0
 
-    # Technische Verdichterparameter (Excel C108:C117).
+    # Technische Parameter für H₂- und O₂-Verdichter.
     h2_processed_share: float = 1.0
     h2_compressor_outlet_pressure_bar: float = 150.0
     h2_compressor_inlet_temperature_c: float = 20.0
@@ -66,20 +67,20 @@ class CapexInputs:
     oxygen_compressor_inlet_pressure_bar: float = 10.0
     oxygen_compressor_efficiency: float = 0.70
 
-    # Batteriesystem (Excel C46:C50)
+    # Batteriesystem: Kapazität, Ladeleistung und Investitionskosten.
     battery_enabled: bool = False
     battery_capacity_factor_kwh_per_kw: float = 5.0  # Stunden/Faktor * Systemleistung
     battery_power_kw: float = 50_000.0
     battery_invest_eur_per_kwh: float = 220.0
     battery_fixed_eur: float = 0.0
 
-    # Finanzierung (Excel C161:C164)
+    # Finanzierung über Fremd- und Eigenkapital.
     debt_share: float = 0.75
     debt_interest_rate: float = 0.03
     equity_interest_rate: float = 0.10
     corporate_tax_rate: float = 0.30
 
-    # Stacktausch (Excel C126:C128)
+    # Annahmen zu Stacktausch, Kostendegression und Finanzierung.
     stack_replacement_share_of_ely_capex: float = 0.40
     stack_cost_degression_per_year: float = -0.05
     stack_financing_interest_rate: float = 0.05
@@ -87,8 +88,8 @@ class CapexInputs:
 
 @dataclass
 class OpexInputs:
-    # Excel C133/G133/G134: alternativ kann die gesamte OPEX pauschal als
-    # Anteil der (nach CAPEX-Förderung verbleibenden) CAPEX angesetzt werden.
+    # Optional kann die gesamte OPEX pauschal als Anteil der nach CAPEX-Förderung
+    # verbleibenden Investition angesetzt werden.
     lump_sum_enabled: bool = False
     lump_sum_share_of_capex: float = 0.0
     lump_sum_escalation_per_year: float = 0.0
@@ -114,9 +115,9 @@ class OpexInputs:
 
 @dataclass
 class FundingInputs:
-    """Förderungen und Strompreiskompensation gemäß Excel Rev. 8.
+    """Förderungen und Strompreiskompensation.
 
-    Interne ``mode``-Werte entsprechen den Dropdowns des Excel-Blatts:
+    Interne ``mode``-Werte kodieren die auswählbaren Berechnungsvarianten:
     - CAPEX: ``none`` | ``percentage`` | ``absolute``
     - OPEX: ``none`` | ``per_kg`` | ``per_full_load_hour``
     - Strom: ``none`` | ``per_kg`` | ``per_mwh``
@@ -159,47 +160,46 @@ class PowerInputs:
 
     ppa_price_escalation_per_year: float = 0.0
 
-    # 37. BImSchV §7 Abs. 3 (Excel C83:C89).
+    # Strombezug nach §7 Abs. 3 der 37. BImSchV.
     section7_enabled: bool = False
     section7_include_negative_prices: bool = True
-    # "timeseries" entspricht Excel "Jahresdaten", "fixed" der eigenen Eingabe.
+    # CO₂-Preis wahlweise aus der stündlichen Zeitreihe oder als konstanter Eingabewert.
     section7_co2_price_mode: str = "timeseries"
     section7_co2_price_eur_per_t: float = 0.0
     section7_co2_price_escalation_per_year: float = 0.0
     section7_co2_factor: float = 0.36
     section7_min_price_threshold_eur_per_mwh: float = 20.0
 
-    # §13k EnWG "Nutzen statt Abregeln" (Excel C91:C94).
+    # Strombezug nach §13k EnWG ("Nutzen statt Abregeln").
     section13k_enabled: bool = False
     section13k_price_eur_per_mwh: float = 30.0
     section13k_price_escalation_per_year: float = 0.0
 
-    # Excel C79/C76: unspezifischer Spotbezug ist im Referenzfall deaktiviert.
+    # Optionaler Spotmarktbezug zur Deckung verbleibender Stromlücken.
     spot_purchase_enabled: bool = False
     spot_purchase_price_limit_enabled: bool = True
     spot_purchase_price_limit_eur_per_mwh: float = 70.0
     spot_price_escalation_per_year: float = 0.0
 
-    # Stromhandel / Überschussverkauf (Excel C206:C209). Der Master-Schalter
-    # bleibt aus Gründen der Rückwärtskompatibilität ``spot_sale_enabled``; der
-    # Verkauf kann aber wahlweise am Spotmarkt oder zu einem PPA-Verkaufspreis
-    # erfolgen. C209 wird im Excel für beide Verkaufsmodi verwendet.
+    # Stromhandel / Überschussverkauf. Der historische Feldname
+    # ``spot_sale_enabled`` dient als gemeinsamer Aktivierungsschalter; verkauft
+    # werden kann wahlweise am Spotmarkt oder zu einem festen PPA-Verkaufspreis.
     spot_sale_enabled: bool = True
     power_sale_mode: str = "spot"  # "spot" | "ppa"
     ppa_sale_price_eur_per_mwh: float = 0.0
     spot_sale_price_escalation_per_year: float = 0.0
 
-    # Optionale Streamlit-Erweiterung gegenüber Excel Rev. 8: Mindestpreis für
-    # Spotverkauf. Default aus -> Referenzmethodik bleibt identisch.
+    # Optionaler Mindestpreis für Spotverkäufe. Ist die Funktion deaktiviert,
+    # wird jeder positive vermarktbare Überschuss zum stündlichen Marktpreis bewertet.
     spot_sale_price_limit_enabled: bool = False
     spot_sale_min_price_eur_per_mwh: float = 0.0
 
 
 @dataclass
 class ElectricityCostInputs:
-    """Stromnebenkosten und Privilegierungen gemäß Blatt ``5. Strompreis``.
+    """Stromnebenkosten und Privilegierungen.
 
-    Die variablen Sätze werden wie im Excel in ct/kWh eingegeben. Eine aktive
+    Die variablen Sätze werden in ct/kWh eingegeben. Eine aktive
     Befreiung setzt den jeweiligen Kostenbestandteil auf 0. Der Leistungspreis
     wird separat in €/kW und Monat angegeben und aus der maximalen Leistung
     annualisiert.
@@ -234,7 +234,7 @@ class ElectricityCostInputs:
 
 @dataclass
 class RevenueInputs:
-    # THG-Quote (Excel C198:C203)
+    # THG-Quote: Preis, anrechenbarer Mobilitätsanteil und Erlösaufteilung.
     thg_enabled: bool = True
     thg_price_eur_per_tco2: float = 200.0
     mobility_share: float = 0.35
@@ -242,31 +242,31 @@ class RevenueInputs:
     h2_thg_intensity_kgco2_per_gj: float = 5.0
     thg_price_escalation_per_year: float = 0.0
 
-    # Nebenprodukte (Excel C212:C218). Die Erlöse werden nur angesetzt, wenn
-    # das zugehörige System in den CAPEX aktiviert wurde.
+    # Nebenprodukte: Erlöse werden nur angesetzt, wenn das zugehörige
+    # Sauerstoff- bzw. Abwärmesystem in den CAPEX aktiviert wurde.
     oxygen_price_eur_per_t: float = 50.0
     oxygen_price_escalation_per_year: float = 0.0
     waste_heat_price_eur_per_mwh: float = 40.0
     waste_heat_usable_share: float = 0.75
     waste_heat_price_escalation_per_year: float = 0.0
 
-    # Regelenergie (Excel C221:C223). Rev. 8 bildet keinen Regelenergiemarkt
-    # stündlich ab, sondern übernimmt einen kalkulierten Jahresertrag und mittelt
-    # dessen nominale Preisentwicklung über die Projektlaufzeit.
+    # Regelenergie wird nicht stündlich simuliert. Stattdessen wird ein exogen
+    # kalkulierter Jahresertrag angesetzt und seine Preisentwicklung über die
+    # Projektlaufzeit nominal gemittelt.
     balancing_energy_enabled: bool = False
     balancing_energy_revenue_eur_per_year: float = 0.0
     balancing_energy_escalation_per_year: float = 0.0
 
-    # Sonstige Erlöse (Excel C226:C230): zwei getrennte Jahrespositionen mit
-    # jeweils eigener Preisentwicklung und gemeinsamem Aktivierungsschalter.
+    # Sonstige Erlöse: zwei getrennte Jahrespositionen mit jeweils eigener
+    # Preisentwicklung und gemeinsamem Aktivierungsschalter.
     other_revenues_enabled: bool = False
     other_revenue_1_eur_per_year: float = 0.0
     other_revenue_1_escalation_per_year: float = 0.0
     other_revenue_2_eur_per_year: float = 0.0
     other_revenue_2_escalation_per_year: float = 0.0
 
-    # Legacy-Feld für ältere gespeicherte Python-Konfigurationen. Es ist nicht
-    # Teil der Excel-UI und wird in der Streamlit-Oberfläche nicht mehr angeboten.
+    # Legacy-Feld für ältere gespeicherte Python-Konfigurationen. Es wird aus
+    # Kompatibilitätsgründen weiterhin eingelesen, aber nicht mehr im UI angeboten.
     other_revenue_eur_per_year: float = 0.0
 
 

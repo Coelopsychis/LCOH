@@ -6,14 +6,14 @@ import re
 from pathlib import Path
 
 
-def make_demo_timeseries(seed: int = 7) -> pd.DataFrame:
+def load_default_timeseries(seed: int = 7) -> pd.DataFrame:
+    """Load the bundled 8760-hour reference profile or create a demo profile.
+
+    The bundled profile provides deterministic PV, wind, market-price, CO₂-price
+    and §13k input data for a reproducible default scenario. If that file is not
+    available, a synthetic but structurally equivalent annual profile is generated.
     """
-    Lädt bevorzugt die aus Excel Rev. 8 extrahierte Referenz-Zeitreihe.
-    Falls sie nicht vorhanden ist, wird wie bisher ein synthetischer 8760-h-
-    Datensatz erzeugt. Dadurch bleibt die App portabel, startet im Patch aber
-    mit demselben PV-/Wind-/Preisdatensatz wie das Referenz-Excel.
-    """
-    reference_path = Path(__file__).resolve().parent.parent / "excel_reference_timeseries.csv"
+    reference_path = Path(__file__).resolve().parent.parent / "reference_timeseries.csv"
     if reference_path.exists():
         df = pd.read_csv(reference_path)
         validate_timeseries(df)

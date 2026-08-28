@@ -21,7 +21,7 @@ from core.models import (
     ModelInputs,
 )
 from core.timeseries import (
-    make_demo_timeseries,
+    load_default_timeseries,
     validate_timeseries,
     parse_timeseries_text,
     timeseries_to_text,
@@ -29,7 +29,7 @@ from core.timeseries import (
 from core.simulation import build_dispatch
 from core.finance import compute_lcoh
 from core.sensitivity import (
-    EXCEL_SENSITIVITY_PARAMETERS,
+    SENSITIVITY_PARAMETERS,
     PARAMETER_BY_KEY,
     DEFAULT_SENSITIVITY_RANGE_PERCENT,
     DEFAULT_SENSITIVITY_POINTS,
@@ -115,7 +115,7 @@ def ensure_sensitivity_ui_state() -> None:
     """
     valid_ranges = set(range(5, 81, 5))
     valid_points = set(range(5, 32, 2))
-    valid_parameters = {p.key for p in EXCEL_SENSITIVITY_PARAMETERS}
+    valid_parameters = {p.key for p in SENSITIVITY_PARAMETERS}
 
     if st.session_state.get("_sensitivity_ui_state_version") != SENSITIVITY_UI_STATE_VERSION:
         st.session_state.sensitivity_range_percent = DEFAULT_SENSITIVITY_RANGE_PERCENT
@@ -268,7 +268,7 @@ def init_ui_state() -> None:
     st.session_state.spot_sale_min_price_eur_per_mwh = p.spot_sale_min_price_eur_per_mwh
     st.session_state.spot_sale_price_escalation_per_year = p.spot_sale_price_escalation_per_year * 100
 
-    # Stromnebenkosten / Privilegierungen (Excel Blatt 5)
+    # Stromnebenkosten und Privilegierungen
     for name in (
         "grid_fee_ct_per_kwh",
         "electricity_tax_ct_per_kwh",
@@ -295,7 +295,7 @@ def init_ui_state() -> None:
     ):
         st.session_state[name] = getattr(ec, name)
 
-    # Förderungen & Strompreiskompensation (Excel C167:C193)
+    # Förderungen und Strompreiskompensation
     st.session_state.capex_subsidy_mode = {
         "none": "Ohne", "percentage": "Prozentual", "absolute": "Absolut"
     }[f.capex_mode]
@@ -319,7 +319,7 @@ def init_ui_state() -> None:
     st.session_state.spk_price_escalation_per_year = f.spk_price_escalation_per_year * 100
     st.session_state.spk_separate_revenue_eur_per_year = f.spk_separate_revenue_eur_per_year
 
-    # Erlöse (Excel THG-Quote)
+    # Erlöse und THG-Quote
     r = RevenueInputs()
     st.session_state.thg_enabled = r.thg_enabled
     st.session_state.thg_price_eur_per_tco2 = r.thg_price_eur_per_tco2
@@ -341,7 +341,7 @@ def init_ui_state() -> None:
     st.session_state.other_revenue_2_eur_per_year = r.other_revenue_2_eur_per_year
     st.session_state.other_revenue_2_escalation_per_year = r.other_revenue_2_escalation_per_year * 100
 
-    demo_ts = make_demo_timeseries()
+    demo_ts = load_default_timeseries()
     st.session_state.timeseries_df = demo_ts.copy()
     st.session_state.pv_profile_text = timeseries_to_text(demo_ts["pv_kwh_per_kw"])
     st.session_state.wind_profile_text = timeseries_to_text(demo_ts["wind_kwh_per_kw"])
@@ -1792,7 +1792,7 @@ with tabs[3]:
             c5, c6 = st.columns([1, 2])
             with c5:
                 if st.button("Standard-CO₂-Daten laden", key="co2_demo_btn"):
-                    demo_df = make_demo_timeseries()
+                    demo_df = load_default_timeseries()
                     st.session_state.co2_price_text = timeseries_to_text(demo_df["co2_eur_per_t"])
             with c6:
                 co2_upload = st.file_uploader(
@@ -1873,7 +1873,7 @@ with tabs[3]:
         c4, c5 = st.columns([1, 2])
         with c4:
             if st.button("Standard-§13k-Daten laden", key="section13k_demo_btn"):
-                demo_df = make_demo_timeseries()
+                demo_df = load_default_timeseries()
                 st.session_state.section13k_profile_text = timeseries_to_text(
                     demo_df["section13k_kwh"]
                 )
@@ -2020,7 +2020,7 @@ with tabs[3]:
 
         with c1:
             if st.button("PV-Demo-Profil laden", key="pv_demo_btn"):
-                demo_df = make_demo_timeseries()
+                demo_df = load_default_timeseries()
                 st.session_state.pv_profile_text = timeseries_to_text(demo_df["pv_kwh_per_kw"])
 
         with c2:
@@ -2065,7 +2065,7 @@ with tabs[3]:
 
         with c1:
             if st.button("Wind-Demo-Profil laden", key="wind_demo_btn"):
-                demo_df = make_demo_timeseries()
+                demo_df = load_default_timeseries()
                 st.session_state.wind_profile_text = timeseries_to_text(demo_df["wind_kwh_per_kw"])
 
         with c2:
@@ -2149,7 +2149,7 @@ with tabs[3]:
 
 
     # ------------------------------------------------------------
-    # Stromhandel / Überschussverkauf (Excel C206:C209)
+    # Stromhandel und Überschussverkauf
     # ------------------------------------------------------------
     with st.expander("Stromhandel / Überschussverkauf", expanded=False):
         c1, c2, c3 = st.columns(3)
@@ -2232,7 +2232,7 @@ with tabs[3]:
 
         with c1:
             if st.button("Demo-Spotpreise laden", key="spot_demo_btn"):
-                demo_df = make_demo_timeseries()
+                demo_df = load_default_timeseries()
                 st.session_state.spot_price_text = timeseries_to_text(demo_df["day_ahead_eur_per_mwh"])
 
         with c2:
@@ -3226,8 +3226,8 @@ with tabs[6]:
             )
             st.session_state.sensitivity_points = sensitivity_points
         with c3:
-            label_to_key = {p.label: p.key for p in EXCEL_SENSITIVITY_PARAMETERS}
-            key_to_label = {p.key: p.label for p in EXCEL_SENSITIVITY_PARAMETERS}
+            label_to_key = {p.label: p.key for p in SENSITIVITY_PARAMETERS}
+            key_to_label = {p.key: p.label for p in SENSITIVITY_PARAMETERS}
             selected_label = st.selectbox(
                 "Parameter für Detailkurve",
                 options=list(label_to_key),
