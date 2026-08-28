@@ -1,8 +1,7 @@
 """Einheitliche Hilfetexte für die Streamlit-Oberfläche.
 
-Die Texte basieren auf den Zellkommentaren und Berechnungsannahmen des
-Excel-Referenzmodells Rev. 8 und wurden für die Weboberfläche sprachlich
-vereinheitlicht. Ziel ist, dass jede Eingabe kurz erklärt:
+Die Texte wurden für die Weboberfläche sprachlich vereinheitlicht. Ziel ist,
+dass jede Eingabe kurz erklärt:
 
 1. was der Parameter beschreibt,
 2. auf welche Bezugsgröße/Einheit er sich bezieht und
@@ -45,7 +44,7 @@ HELP = {
         "Volllaststunden bestimmt das Modell, wie viele Stacktausche erforderlich werden."
     ),
     "degradation_per_year": (
-        "Lineare Abnahme des Elektrolyseurwirkungsgrads in Prozentpunkten pro Jahr. Rev. 8 bildet daraus einen "
+        "Lineare Abnahme des Elektrolyseurwirkungsgrads in Prozentpunkten pro Jahr. Das Modell bildet daraus einen "
         "mittleren Wirkungsgrad zwischen Stackwechseln; 1 % bedeutet hier 1 Prozentpunkt pro Jahr."
     ),
 
@@ -103,8 +102,8 @@ HELP = {
         "verkauft werden kann. 100 % bedeutet vollständige Nutzung der im Modell ermittelten Wärmemenge."
     ),
     "waste_heat_price_escalation_per_year": (
-        "Nominale jährliche Änderung des Abwärmepreises. Wie in Rev. 8 wird daraus ein durchschnittlicher "
-        "Verkaufspreis über die Projektlaufzeit gebildet."
+        "Nominale jährliche Änderung des Abwärmepreises. Daraus wird ein durchschnittlicher Verkaufspreis über die "
+        "Projektlaufzeit gebildet."
     ),
 
     # ------------------------------------------------------------------
@@ -127,19 +126,19 @@ HELP = {
         "und damit die Verdichterarbeit."
     ),
     "oxygen_compressor_inlet_temperature_c": (
-        "Temperatur des Sauerstoffs am Verdichtereintritt. Sie geht in die ideale Gas-/Verdichterrechnung nach "
-        "der Methodik von Excel Rev. 8 ein."
+        "Temperatur des Sauerstoffs am Verdichtereintritt. Sie geht in die im Modell verwendete ideale "
+        "Gas-/Verdichterrechnung ein."
     ),
     "oxygen_compressor_efficiency": (
         "Isentroper Wirkungsgrad des O₂-Kompressors. Niedrigere Wirkungsgrade erhöhen den realen spezifischen "
         "Strombedarf der Verdichtung."
     ),
     "oxygen_price_eur_per_t": (
-        "Heutiger Verkaufspreis für aufbereiteten Sauerstoff je Tonne. Das Modell setzt gemäß Rev. 8 eine "
-        "Sauerstoffproduktion von 8 kg O₂ je kg H₂ an."
+        "Heutiger Verkaufspreis für aufbereiteten Sauerstoff je Tonne. Das Modell setzt eine Sauerstoffproduktion "
+        "von 8 kg O₂ je kg H₂ an."
     ),
     "oxygen_price_escalation_per_year": (
-        "Nominale jährliche Änderung des Sauerstoffverkaufspreises. Rev. 8 verwendet den daraus gebildeten "
+        "Nominale jährliche Änderung des Sauerstoffverkaufspreises. Das Modell verwendet den daraus gebildeten "
         "Durchschnittspreis über die Projektlaufzeit."
     ),
 
@@ -171,30 +170,30 @@ HELP = {
         "Verdichterarbeit maßgebliche Druckverhältnis."
     ),
     "h2_compressor_inlet_temperature_c": (
-        "Temperatur des Wasserstoffs am Verdichtereintritt. Sie wird in der idealen Gas-/Verdichterrechnung nach "
-        "Excel Rev. 8 verwendet."
+        "Temperatur des Wasserstoffs am Verdichtereintritt. Sie wird in der im Modell verwendeten idealen "
+        "Gas-/Verdichterrechnung berücksichtigt."
     ),
     "h2_compressor_efficiency": (
         "Isentroper Wirkungsgrad des H₂-Kompressors. Niedrigere Wirkungsgrade erhöhen den realen spezifischen "
         "Strombedarf der Verdichtung."
     ),
-    "h2_compressor_work": "Isentrope Verdichterarbeit für Wasserstoff nach der Methodik des Excel-Referenzmodells.",
-    "oxygen_compressor_work": "Isentrope Verdichterarbeit für Sauerstoff nach der Methodik des Excel-Referenzmodells.",
+    "h2_compressor_work": "Isentrope Verdichterarbeit für Wasserstoff nach der im Modell verwendeten idealen Gas-/Verdichterrechnung.",
+    "oxygen_compressor_work": "Isentrope Verdichterarbeit für Sauerstoff nach der im Modell verwendeten idealen Gas-/Verdichterrechnung.",
 
     # ------------------------------------------------------------------
     # Batterie
     # ------------------------------------------------------------------
     "battery_enabled": (
         "Aktivieren, wenn ein Batteriespeicher im stündlichen Dispatch berücksichtigt werden soll. Der Speicher kann "
-        "Überschüsse aufnehmen und später zur Versorgung des Systems abgeben; Rev. 8 modelliert keine Speicherverluste."
+        "Überschüsse aufnehmen und später zur Versorgung des Systems abgeben; das Modell berücksichtigt dabei keine Speicherverluste."
     ),
     "battery_capacity_factor_kwh_per_kw": (
         "Speicherkapazität relativ zur installierten Systemleistung. Ein Wert von 5 kWh/kW entspricht ungefähr "
         "einem 5-Stunden-Speicher; die Kapazität wird aus diesem Faktor und der Systemleistung berechnet."
     ),
     "battery_power_kw": (
-        "Maximale elektrische Eingangs-/Ladeleistung der Batterie. Die Entladeleistung wird in der Excel-Methodik "
-        "separat durch die installierte Systemleistung begrenzt."
+        "Maximale elektrische Eingangs-/Ladeleistung der Batterie. Die Entladeleistung wird separat durch die "
+        "installierte Systemleistung begrenzt."
     ),
     "battery_invest_eur_per_kwh": (
         "Spezifische Batterie-Investitionskosten je kWh berechneter Speicherkapazität. Höhere Werte erhöhen die CAPEX "
@@ -205,8 +204,8 @@ HELP = {
         "Nebenanlagen. Werden unabhängig von der Speicherkapazität addiert."
     ),
     "battery_capacity_factor": (
-        "Faktor zwischen Speicherkapazität und Leistung des Elektrolyseursystems. In Rev. 8 bestimmt die "
-        "Systemleistung zugleich die maximale Entladeleistung."
+        "Faktor zwischen Speicherkapazität und Leistung des Elektrolyseursystems. Die Systemleistung bestimmt im "
+        "Modell zugleich die maximale Entladeleistung."
     ),
 
     # ------------------------------------------------------------------
@@ -221,8 +220,8 @@ HELP = {
         "Kostensenkungen/Skaleneffekte ab; z. B. −5 %/a reduziert spätere Ersatzkosten."
     ),
     "stack_financing_interest_rate": (
-        "Zinssatz für die Finanzierung bzw. Rückstellung der Stackersatzkosten. Das Modell folgt der gesonderten "
-        "Stackfinanzierungslogik aus Excel Rev. 8."
+        "Zinssatz für die Finanzierung bzw. Rückstellung der Stackersatzkosten. Die Stackersatzkosten werden mit "
+        "einer eigenen Finanzierungslogik annualisiert."
     ),
     "debt_share": (
         "Anteil der CAPEX nach CAPEX-Förderung, der mit Fremdkapital finanziert wird. Der verbleibende Anteil wird "
@@ -236,8 +235,8 @@ HELP = {
         "Er wird separat vom Fremdkapital annuitätisch berücksichtigt."
     ),
     "corporate_tax_rate": (
-        "Unternehmenssteuersatz für die WACC-Kennzahl. Wie in Rev. 8 beeinflusst er den ausgewiesenen WACC, nicht aber "
-        "die separat berechneten FK-/EK-Annuitäten und damit nicht direkt den LCOH."
+        "Unternehmenssteuersatz für die WACC-Kennzahl. Er beeinflusst den ausgewiesenen WACC, nicht aber die separat "
+        "berechneten FK-/EK-Annuitäten und damit nicht direkt den LCOH."
     ),
 
     # ------------------------------------------------------------------
@@ -252,12 +251,12 @@ HELP = {
         "OPEX-Berechnung aktiviert ist."
     ),
     "lump_sum_escalation_per_year": (
-        "Nominale jährliche Preisentwicklung der pauschalen OPEX. Rev. 8 bildet daraus einen mittleren Jahreswert "
-        "über die Projektlaufzeit."
+        "Nominale jährliche Preisentwicklung der pauschalen OPEX. Daraus wird ein mittlerer Jahreswert über die "
+        "Projektlaufzeit gebildet."
     ),
     "maintenance_share_of_capex": (
         "Jährliche Wartungs- und Instandhaltungskosten als Anteil der gesamten CAPEX vor Förderung. Personalkosten "
-        "werden in Rev. 8 separat erfasst und sollten hier nicht doppelt enthalten sein."
+        "werden separat erfasst und sollten hier nicht doppelt enthalten sein."
     ),
     "maintenance_escalation_per_year": (
         "Nominale jährliche Kostenentwicklung für Wartung und Instandhaltung. Daraus wird der durchschnittliche "
@@ -268,8 +267,8 @@ HELP = {
         "Aufwendungen. Hier den gesamten projektrelevanten Personalaufwand pro Jahr ansetzen."
     ),
     "personnel_escalation_per_year": (
-        "Nominale jährliche Entwicklung der Personalkosten. Rev. 8 verwendet den daraus resultierenden "
-        "durchschnittlichen Jahreswert über die Projektlaufzeit."
+        "Nominale jährliche Entwicklung der Personalkosten. Daraus wird der durchschnittliche Jahreswert über die "
+        "Projektlaufzeit gebildet."
     ),
     "reserve_remaining_plant_share_of_capex": (
         "Jährliche Rückstellung für Ersatzinvestitionen der übrigen Anlage als Anteil der CAPEX vor Förderung. "
@@ -283,7 +282,7 @@ HELP = {
         "Nominale jährliche Kostenentwicklung der Rückstellungen für Restanlage und Rückbau."
     ),
     "freshwater_price_eur_per_m3": (
-        "Preis für bezogenes Frischwasser je m³. Die Excel-Methodik setzt 18 Liter Frischwasser je kg H₂ an "
+        "Preis für bezogenes Frischwasser je m³. Das Modell setzt 18 Liter Frischwasser je kg H₂ an "
         "(9 kg stöchiometrisch × Faktor 2)."
     ),
     "freshwater_treatment_price_eur_per_m3": (
@@ -291,7 +290,7 @@ HELP = {
         "Sie werden auf dieselbe Frischwassermenge wie der Wasserbezugspreis angewendet."
     ),
     "wastewater_price_eur_per_m3": (
-        "Kosten für Abwasser je m³. Rev. 8 setzt dafür 9 Liter Abwasser je kg produziertem H₂ an."
+        "Kosten für Abwasser je m³. Das Modell setzt dafür 9 Liter Abwasser je kg produziertem H₂ an."
     ),
     "water_escalation_per_year": (
         "Nominale jährliche Entwicklung der Wasser-, Aufbereitungs- und Abwasserkosten. Daraus wird ein mittlerer "
@@ -302,15 +301,15 @@ HELP = {
         "abgebildete Betriebs-, Versicherungs- oder Dienstleistungskosten."
     ),
     "individual_opex_escalation_per_year": (
-        "Nominale jährliche Entwicklung der individuellen OPEX. Rev. 8 verwendet den mittleren Wert über die Laufzeit."
+        "Nominale jährliche Entwicklung der individuellen OPEX. Das Modell verwendet den mittleren Wert über die Projektlaufzeit."
     ),
 
     # ------------------------------------------------------------------
     # THG-Quote / weitere Erlöse
     # ------------------------------------------------------------------
     "thg_quote": (
-        "Aktivieren, wenn Erlöse aus der THG-Quote angesetzt werden sollen. Die Berechnung folgt der in Rev. 8 "
-        "hinterlegten Minderungsquoten- und Anrechnungslogik; reale Förderfähigkeit bitte separat prüfen."
+        "Aktivieren, wenn Erlöse aus der THG-Quote angesetzt werden sollen. Die Berechnung verwendet die im Modell "
+        "hinterlegte Minderungsquoten- und Anrechnungslogik; die reale Anrechenbarkeit bitte separat prüfen."
     ),
     "thg_price_eur_per_tco2": (
         "Heutiger Erlöswert je anrechenbarer Tonne CO₂-Minderung. Zusammen mit H₂-Menge, Mobilitätsanteil, "
@@ -326,14 +325,14 @@ HELP = {
     ),
     "h2_thg_intensity_kgco2_per_gj": (
         "Angenommene THG-Intensität des grünen Wasserstoffs in kg CO₂-Äq. je GJ. Ein höherer Wert reduziert in der "
-        "Rev.-8-Logik die anrechenbare THG-Minderung und damit den Erlös."
+        "Berechnungslogik die anrechenbare THG-Minderung und damit den Erlös."
     ),
     "thg_price_escalation_per_year": (
         "Nominale jährliche Entwicklung des THG-Quotenpreises. Das Modell bildet daraus den durchschnittlichen "
         "Quotenpreis über die Projektlaufzeit."
     ),
     "balancing_energy": (
-        "Aktivieren, wenn ein extern kalkulierter Erlös aus Regelenergie berücksichtigt werden soll. Rev. 8 "
+        "Aktivieren, wenn ein extern kalkulierter Erlös aus Regelenergie berücksichtigt werden soll. Das Modell "
         "simuliert keinen Regelenergiemarkt stündlich, sondern übernimmt einen Jahresbetrag."
     ),
     "balancing_energy_revenue_eur_per_year": (
@@ -341,8 +340,8 @@ HELP = {
         "ermitteln; er wird nicht aus der stündlichen Fahrweise berechnet."
     ),
     "balancing_energy_escalation_per_year": (
-        "Nominale jährliche Entwicklung des Regelenergieerlöses. Rev. 8 bildet daraus den mittleren Jahreserlös über "
-        "die Projektlaufzeit."
+        "Nominale jährliche Entwicklung des Regelenergieerlöses. Daraus wird der mittlere Jahreserlös über die "
+        "Projektlaufzeit gebildet."
     ),
     "other_revenues": (
         "Aktiviert zwei frei definierbare zusätzliche Jahreserlöse für Einnahmen, die in den übrigen Kategorien "
@@ -378,8 +377,8 @@ HELP = {
         "separat im entsprechenden Abschnitt ergänzt."
     ),
     "baseload_price_escalation_per_year": (
-        "Nominale jährliche Preisentwicklung des Baseload-PPA. Rev. 8 bildet aus Ausgangspreis und Steigerung einen "
-        "durchschnittlichen Preis über die Projektlaufzeit."
+        "Nominale jährliche Preisentwicklung des Baseload-PPA. Aus Ausgangspreis und Preisentwicklung wird ein "
+        "durchschnittlicher Preis über die Projektlaufzeit gebildet."
     ),
     "ppa_pv_enabled": (
         "Aktivieren, wenn ein PV-PPA nach Erzeugungsprofil ('pay as produced') berücksichtigt werden soll. Die "
@@ -404,17 +403,17 @@ HELP = {
         "Heutiger Arbeitspreis des Wind-PPA je gelieferter MWh. Stromnebenkosten werden separat berücksichtigt."
     ),
     "ppa_price_escalation_per_year": (
-        "Gemeinsame nominale jährliche Preisentwicklung für PV- und Wind-PPA. Rev. 8 bildet daraus mittlere PPA-Preise "
-        "über die Projektlaufzeit."
+        "Gemeinsame nominale jährliche Preisentwicklung für PV- und Wind-PPA. Daraus werden mittlere PPA-Preise über "
+        "die Projektlaufzeit gebildet."
     ),
 
     # ------------------------------------------------------------------
     # §7 / CO2
     # ------------------------------------------------------------------
     "section7": (
-        "Aktiviert den Excel-kompatiblen Strombezug nach §7 Abs. 3 der 37. BImSchV. Stündlich wird geprüft, ob der "
-        "Börsenpreis unter der aus CO₂-Preis und Mindestgrenze abgeleiteten Schwelle liegt; die reale rechtliche "
-        "Anwendbarkeit wird vom Tool nicht geprüft."
+        "Aktiviert den Strombezug nach §7 Abs. 3 der 37. BImSchV. Stündlich wird geprüft, ob der Börsenpreis unter "
+        "der aus CO₂-Preis und Mindestgrenze abgeleiteten Schwelle liegt; die reale rechtliche Anwendbarkeit wird "
+        "vom Tool nicht geprüft."
     ),
     "section7_negative_prices": (
         "Legt fest, ob negative Börsenpreise bei der §7-Grenzpreisprüfung als negative Werte verwendet werden. "
@@ -425,8 +424,8 @@ HELP = {
         "eigener Wert für alle 8760 Stunden."
     ),
     "section7_co2_price_eur_per_t": (
-        "Konstanter CO₂-Preis je Tonne für alle Stunden, wenn 'Eigener Wert' gewählt ist. Er beeinflusst die "
-        "§7-Grenzpreisschwelle über die in Rev. 8 hinterlegte 0,36-Faktor-Logik."
+        "Konstanter CO₂-Preis je Tonne für alle Stunden, wenn 'Eigener Wert' gewählt ist. Für die §7-Grenzpreisschwelle "
+        "wird der CO₂-Preis mit dem Faktor 0,36 verrechnet; zusätzlich gelten die modellierten Preisgrenzen."
     ),
     "section7_co2_price_escalation_per_year": (
         "Nominale jährliche Entwicklung des CO₂-Preises. Die gemittelte Preisentwicklung wirkt bereits auf die "
@@ -453,7 +452,7 @@ HELP = {
         "8760-h-Reihe vorgegeben."
     ),
     "section13k_price_escalation_per_year": (
-        "Nominale jährliche Preisentwicklung des §13k-Strompreises. Rev. 8 verwendet den gemittelten Preis über die "
+        "Nominale jährliche Preisentwicklung des §13k-Strompreises. Verwendet wird der gemittelte Preis über die "
         "Projektlaufzeit."
     ),
     "section13k_csv": (
@@ -528,19 +527,20 @@ HELP = {
     ),
     "spot_purchase_enabled": (
         "Aktivieren, wenn nach PPA, §7, §13k und gegebenenfalls Batterie fehlender Strom am Spotmarkt beschafft werden "
-        "darf. Hinweis aus dem Excel-Modell: Ein unspezifischer Spotbezug kann die Einordnung als grüner H₂ beeinflussen."
+        "darf. Ein unspezifischer Spotbezug kann die regulatorische Einordnung des erzeugten Wasserstoffs beeinflussen; "
+        "die konkrete Zulässigkeit ist projektspezifisch zu prüfen."
     ),
     "spot_purchase_price_limit_enabled": (
         "Aktivieren, um Spotstrom nur unterhalb eines Maximalpreises zu kaufen. Die Grenze wird außerdem als obere "
         "Schranke der §7-Grenzpreislogik verwendet."
     ),
     "spot_purchase_price_limit_eur_per_mwh": (
-        "Maximaler Spotpreis für den allgemeinen Strombezug. Im normalen Spotbezug kauft das Excel-Modell nur bei "
-        "Preisen strikt unter dieser Grenze."
+        "Maximaler Spotpreis für den allgemeinen Strombezug. Das Modell kauft Spotstrom nur bei Preisen strikt unter "
+        "dieser Grenze."
     ),
     "spot_price_escalation_per_year": (
-        "Nominale jährliche Entwicklung der Spotpreisreihe. Rev. 8 wendet den gemittelten Faktor bereits vor den "
-        "stündlichen Kauf-/Grenzpreisentscheidungen an."
+        "Nominale jährliche Entwicklung der Spotpreisreihe. Der gemittelte Faktor wird bereits vor den stündlichen "
+        "Kauf- und Grenzpreisentscheidungen angewendet."
     ),
     "power_sale_enabled": (
         "Aktiviert den Verkauf von Strom, der nach Systemverbrauch und Batterieladung übrig bleibt. Der Verkauf kann "
@@ -548,7 +548,7 @@ HELP = {
     ),
     "power_sale_mode": (
         "Wahl der Erlösbewertung für Überschussstrom: 'Spotmarkt' nutzt die stündlichen Marktpreise, 'PPA' einen "
-        "festen Verkaufspreis. Negative Spotpreise werden einnahmeseitig wie in Rev. 8 auf 0 begrenzt."
+        "festen Verkaufspreis. Negative Spotpreise werden einnahmeseitig auf 0 €/MWh begrenzt."
     ),
     "ppa_sale_price": (
         "Heutiger PPA-Verkaufspreis für überschüssigen Strom. Er wird nur im Verkaufsmodus 'PPA' verwendet."
@@ -558,16 +558,16 @@ HELP = {
         "über die Projektlaufzeit gemittelt."
     ),
     "spot_sale_price_escalation_per_year": (
-        "Nominale jährliche Entwicklung des Stromverkaufspreises. Die Excel-Logik verwendet diese Entwicklung sowohl "
-        "im Spot- als auch im PPA-Verkaufsmodus."
+        "Nominale jährliche Entwicklung des Stromverkaufspreises. Diese Preisentwicklung wird sowohl im Spot- als auch "
+        "im PPA-Verkaufsmodus verwendet."
     ),
     "spot_sale_price_limit_enabled": (
-        "Optionale Erweiterung der Streamlit-App: Überschussstrom wird am Spotmarkt nur verkauft, wenn der Preis "
-        "mindestens die angegebene Grenze erreicht. Excel Rev. 8 besitzt diese Zusatzgrenze nicht."
+        "Aktivieren, wenn Überschussstrom am Spotmarkt nur oberhalb eines frei wählbaren Mindestpreises verkauft werden "
+        "soll. Unterhalb der Grenze bleibt der Überschuss unverkauft."
     ),
     "spot_sale_min_price_eur_per_mwh": (
         "Mindestpreis für den optional begrenzten Spotverkauf. Unterhalb dieses Werts bleibt der Überschuss im Modell "
-        "unverkauft; diese Funktion ist eine Streamlit-Erweiterung gegenüber Rev. 8."
+        "unverkauft."
     ),
     "spot_price_csv": (
         "CSV mit genau 8760 Day-Ahead-Spotpreisen in €/MWh. Verwendet wird die erste numerische Spalte; negative Preise "
@@ -594,8 +594,8 @@ HELP = {
         "Elektrolyseurleistung."
     ),
     "opex_subsidy": (
-        "Wählt die OPEX-Förderung nach produziertem kg H₂ oder je äquivalenter Volllaststunde. Besonderheit Rev. 8: "
-        "Im detaillierten OPEX-Modus wird sie ausgewiesen, aber nicht von OPEX Total/LCOH abgezogen."
+        "Wählt die OPEX-Förderung nach produziertem kg H₂ oder je äquivalenter Volllaststunde. Besonderheit der "
+        "Berechnungslogik: Im detaillierten OPEX-Modus wird sie ausgewiesen, aber nicht von OPEX Total/LCOH abgezogen."
     ),
     "opex_subsidy_eur_per_kg_h2": (
         "OPEX-Förderbetrag je produziertem kg H₂. Der Jahresbetrag skaliert direkt mit der H₂-Produktion."
@@ -614,7 +614,7 @@ HELP = {
         "Strompreisförderung je tatsächlich verbrauchter MWh Systemstrom (nicht je beschaffter MWh)."
     ),
     "spk": (
-        "Wählt die Strompreiskompensation: keine, Berechnung nach der in Rev. 8 hinterlegten Rechnerlogik oder ein "
+        "Wählt die Strompreiskompensation: keine, automatische Berechnung anhand der hinterlegten Parameter oder ein "
         "separat kalkulierter Jahresertrag. Die reale Förderfähigkeit wird nicht geprüft."
     ),
     "spk_eua_price_eur_per_tco2": (
@@ -626,8 +626,8 @@ HELP = {
         "entspricht 80 % des jährlichen Systemstromverbrauchs."
     ),
     "spk_price_escalation_per_year": (
-        "Nominale jährliche Entwicklung des EUA-Preises bzw. des separat angesetzten SPK-Ertrags. Rev. 8 bildet "
-        "daraus einen Mittelwert über die Projektlaufzeit."
+        "Nominale jährliche Entwicklung des EUA-Preises bzw. des separat angesetzten SPK-Ertrags. Daraus wird ein "
+        "Mittelwert über die Projektlaufzeit gebildet."
     ),
     "spk_separate_revenue_eur_per_year": (
         "Extern ermittelter heutiger Jahresbetrag der Strompreiskompensation. Wird nur im Modus 'Separat' verwendet."
@@ -637,23 +637,23 @@ HELP = {
     # Sensitivitätsanalyse
     # ------------------------------------------------------------------
     "sensitivity_range_percent": (
-        "Prozentuale Abweichung nach unten und oben für die Sensitivitätsanalyse. ±30 % entspricht dem Standard des "
-        "Excel-Blatts; der Bereich gilt für Tornado-Diagramm, Tabelle und Detailkurve."
+        "Prozentuale Abweichung nach unten und oben für die Sensitivitätsanalyse. Der Bereich gilt für Tornado-Diagramm, "
+        "Tabelle und Detailkurve; standardmäßig werden ±30 % verwendet."
     ),
     "sensitivity_points": (
         "Anzahl der Stützstellen der Detailkurve. 13 Punkte bei ±30 % ergeben 5-%-Schritte von −30 % bis +30 % "
         "einschließlich des Basisfalls."
     ),
     "sensitivity_parameter": (
-        "Parameter, dessen LCOH-Verlauf als Detailkurve gezeigt wird. Die übrigen Modellgrößen bleiben gemäß der "
-        "Excel-Sensitivitätsmethodik auf dem Basisfall."
+        "Parameter, dessen LCOH-Verlauf als Detailkurve gezeigt wird. Die übrigen Modellgrößen bleiben dabei auf dem "
+        "Basisfall."
     ),
 
     # ------------------------------------------------------------------
     # Generische Texte / Rückwärtskompatibilität
     # ------------------------------------------------------------------
     "price_escalation": (
-        "Nominale jährliche Preisänderung. Excel Rev. 8 diskontiert keine einzelnen Jahreswerte, sondern bildet aus "
+        "Nominale jährliche Preisänderung. Das Modell diskontiert keine einzelnen Jahreswerte, sondern bildet aus "
         "Ausgangswert und jährlicher Entwicklung einen durchschnittlichen nominalen Wert über die Projektlaufzeit."
     ),
 }

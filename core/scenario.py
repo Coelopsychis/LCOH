@@ -105,7 +105,7 @@ def scenario_payload(inputs: ModelInputs, timeseries_df: pd.DataFrame) -> dict[s
     return {
         "type": SCENARIO_TYPE,
         "schema_version": SCENARIO_SCHEMA_VERSION,
-        "methodology": "Excel Rev. 8",
+        "methodology": "LCOH-Modell mit stündlicher Dispatch-Simulation",
         "inputs": model_inputs_to_dict(inputs),
         "timeseries": {
             col: ts[col].tolist()

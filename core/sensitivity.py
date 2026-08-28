@@ -21,7 +21,7 @@ EXCEL_SENSITIVITY_PARAMETERS = (
     SensitivityParameter(
         "thg_quote",
         "THG-Quote",
-        "Skaliert den jährlichen THG-Quotenerlös wie die Sensitivitätsanalyse in Excel Rev. 8.",
+        "Skaliert den jährlichen THG-Quotenerlös proportional zum gewählten Änderungsfaktor.",
     ),
     SensitivityParameter(
         "interest",
@@ -36,12 +36,12 @@ EXCEL_SENSITIVITY_PARAMETERS = (
     SensitivityParameter(
         "project_lifetime",
         "Projektlaufzeit",
-        "Verändert die Laufzeit für Finanzierung und Stacktausch wie im Excel-Sensitivitätsblatt.",
+        "Verändert die Projektlaufzeit und berechnet Finanzierung sowie Stacktausch für diese Laufzeit neu.",
     ),
     SensitivityParameter(
         "capex",
         "CAPEX",
-        "Skaliert die finanzierte Gesamtinvestition; OPEX und Stackkosten bleiben wie im Excel-Sensitivitätsblatt unverändert.",
+        "Skaliert die finanzierte Gesamtinvestition; OPEX und Stackkosten bleiben bei dieser Sensitivität unverändert.",
     ),
     SensitivityParameter(
         "full_load_hours",
@@ -106,12 +106,13 @@ def compute_excel_sensitivity_lcoh(
     parameter_key: str,
     relative_change: float,
 ) -> float:
-    """Return LCOH for one sensitivity point following Excel Rev. 8 sheet 7.
+    """Return the LCOH for one point of the defined sensitivity methodology.
 
-    This deliberately mirrors the workbook's *sensitivity methodology*, which
-    is not always identical to changing an input and recalculating the entire
-    plant model. For example, the workbook CAPEX sensitivity changes financing
-    but leaves CAPEX-linked OPEX and stack replacement at their base values.
+    The sensitivity analysis changes only the cost, revenue or operating
+    component assigned to the selected parameter. This is intentionally not
+    always identical to changing a raw model input and recalculating the full
+    plant model; for example, CAPEX sensitivity changes financing but leaves
+    CAPEX-linked OPEX and stack replacement at their base values.
     """
     if parameter_key not in PARAMETER_BY_KEY:
         raise KeyError(f"Unbekannter Sensitivitätsparameter: {parameter_key}")

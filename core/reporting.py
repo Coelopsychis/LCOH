@@ -195,7 +195,7 @@ _RESULT_LABELS = {
     "section13k_hours": "§13k-Bezugsstunden",
     "annual_battery_charge_kwh": "Batterieladung",
     "annual_battery_discharge_kwh": "Batterieentladung",
-    "battery_cycles_per_year": "Ladezyklen (Excel-KPI)",
+    "battery_cycles_per_year": "Kapazitätsumschläge (Bezugsenergie)",
     "annual_spot_purchase_kwh": "Spotmarktbezug",
     "annual_spot_sale_kwh": "Spotverkauf",
     "annual_ppa_sale_kwh": "PPA-Verkauf",

@@ -863,7 +863,7 @@ st.caption(
 )
 st.caption(
     "Tipp: Das ? an den Eingabefeldern erklärt Bedeutung, Bezugsgröße und Wirkung im Rechenmodell. "
-    "Die Methodik orientiert sich an Excel Rev. 8."
+    "Das Tool kombiniert eine stündliche Betriebs- und Strommarktberechnung mit annualisierten Kosten, Förderungen und Erlösen."
 )
 
 tabs = st.tabs(
@@ -1338,8 +1338,8 @@ with tabs[2]:
             )
         if st.session_state.lump_sum_enabled:
             st.info(
-                "Die detaillierten OPEX-Eingaben darunter werden weiterhin angezeigt, "
-                "aber für OPEX Total nicht verwendet. Dies entspricht der Excel-Umschaltung."
+                "Bei aktivierter pauschaler OPEX-Berechnung werden die detaillierten OPEX-Eingaben darunter "
+                "weiterhin angezeigt, aber für OPEX Total nicht verwendet."
             )
 
     with st.expander("Wartung & Instandhaltung", expanded=True):
@@ -1560,7 +1560,7 @@ with tabs[2]:
                 format="%.1f%%",
             )
         st.caption(
-            "Wie Excel Rev. 8: Regelenergie wird nicht stündlich simuliert, sondern über einen extern kalkulierten Jahresertrag abgebildet."
+            "Regelenergie wird nicht stündlich simuliert, sondern über einen extern kalkulierten Jahresertrag abgebildet."
         )
 
     with st.expander("Weitere Einnahmen – Sonstige", expanded=False):
@@ -1734,7 +1734,7 @@ with tabs[3]:
     # ------------------------------------------------------------
     with st.expander("§7 nach 37. BImSchV", expanded=False):
         st.caption(
-            "Excel-kompatible stündliche Beschaffung nach §7 Abs. 3. Die Quelle wird vor §13k "
+            "Stündliche Beschaffung nach §7 Abs. 3 der 37. BImSchV. Die Quelle wird vor §13k "
             "und vor dem unspezifischen Spotmarktbezug eingesetzt, wenn der Börsenpreis die "
             "aus CO₂-Preis und Spotpreisgrenze abgeleitete Schwelle nicht überschreitet."
         )
@@ -1791,7 +1791,7 @@ with tabs[3]:
         if st.session_state.section7_co2_price_mode == "Jahresdaten":
             c5, c6 = st.columns([1, 2])
             with c5:
-                if st.button("Excel-CO₂-Daten laden", key="co2_demo_btn"):
+                if st.button("Standard-CO₂-Daten laden", key="co2_demo_btn"):
                     demo_df = make_demo_timeseries()
                     st.session_state.co2_price_text = timeseries_to_text(demo_df["co2_eur_per_t"])
             with c6:
@@ -1838,7 +1838,7 @@ with tabs[3]:
     with st.expander('§13k EnWG – "Nutzen statt Abregeln"', expanded=False):
         st.caption(
             "Die stündlich verfügbare §13k-Menge wird nach PPA und §7, aber vor Batterie/Spotmarkt "
-            "eingesetzt. Der Preis wird wie im Excel als eigener Arbeitspreis mit Preisentwicklung geführt."
+            "eingesetzt. Der Preis wird als eigener Arbeitspreis mit Preisentwicklung geführt."
         )
         c1, c2, c3 = st.columns(3)
         with c1:
@@ -1872,7 +1872,7 @@ with tabs[3]:
 
         c4, c5 = st.columns([1, 2])
         with c4:
-            if st.button("Excel-§13k-Daten laden", key="section13k_demo_btn"):
+            if st.button("Standard-§13k-Daten laden", key="section13k_demo_btn"):
                 demo_df = make_demo_timeseries()
                 st.session_state.section13k_profile_text = timeseries_to_text(
                     demo_df["section13k_kwh"]
@@ -1922,9 +1922,8 @@ with tabs[3]:
     # ------------------------------------------------------------
     with st.expander("Stromnebenkosten & Privilegierungen", expanded=False):
         st.caption(
-            "Die Werte und die getrennten Befreiungsstatus für Elektrolyseur und Restverbrauch "
-            "entsprechen dem Aufbau von Excel-Blatt 5. Eine aktivierte Befreiung setzt den jeweiligen "
-            "Kostenbestandteil auf 0 €/MWh."
+            "Die variablen Stromnebenkosten und Befreiungsstatus werden getrennt für Elektrolyseur und "
+            "übrige Verbraucher erfasst. Eine aktivierte Befreiung setzt den jeweiligen Kostenbestandteil auf 0 €/MWh."
         )
         h1, h2, h3, h4 = st.columns([1.7, 1.2, 1.0, 1.0])
         h1.markdown("**Kostenbestandteil**")
@@ -2221,7 +2220,7 @@ with tabs[3]:
                 )
 
         st.caption(
-            "Excel Rev. 8 bewertet die übrige Strommenge wahlweise zum Spotmarktpreis oder zu einem PPA-Verkaufspreis. "
+            "Überschüssiger Strom wird wahlweise zum Spotmarktpreis oder zu einem festen PPA-Verkaufspreis bewertet. "
             "Negative Spotpreise werden einnahmeseitig auf 0 €/MWh begrenzt. Die Verkaufspreisentwicklung gilt in beiden Modi."
         )
 
@@ -2418,8 +2417,8 @@ with tabs[3]:
 with tabs[4]:
     st.subheader("Förderungen & Strompreiskompensation")
     st.caption(
-        "Dieser Bereich bildet Excel Rev. 8 C167:C193 nach. Strompreisprivilegierungen "
-        "werden weiterhin im Tab 'Strom & Zeitreihen' eingestellt."
+        "Hier werden CAPEX-, OPEX- und Strompreisförderungen sowie die Strompreiskompensation berücksichtigt. "
+        "Strompreisprivilegierungen werden weiterhin im Tab 'Strom & Zeitreihen' eingestellt."
     )
 
     with st.expander("CAPEX-Förderung", expanded=True):
@@ -2476,9 +2475,8 @@ with tabs[4]:
             )
         if not st.session_state.lump_sum_enabled and st.session_state.opex_subsidy_mode != "Ohne":
             st.warning(
-                "Excel Rev. 8 weist diese Förderung im detaillierten OPEX-Modus zwar aus, "
-                "zieht sie aber nicht von OPEX Total/LCOH ab. Der Python-Rechner bildet dieses "
-                "Verhalten für Ergebnisparität bewusst nach. Bei aktivierter pauschaler OPEX wird sie abgezogen."
+                "Hinweis zur Berechnungslogik: Im detaillierten OPEX-Modus wird diese OPEX-Förderung zwar ausgewiesen, "
+                "aber nicht von OPEX Total bzw. den LCOH abgezogen. Bei aktivierter pauschaler OPEX wird sie abgezogen."
             )
 
     with st.expander("Strompreisförderung", expanded=True):
@@ -2548,7 +2546,7 @@ with tabs[4]:
             )
         if st.session_state.spk_mode == "Rechner":
             st.caption(
-                "Excel-Rechner: 75 % Beihilfeintensität × 0,72 t CO₂/MWh × mittlerer EUA-Preis "
+                "Automatische Berechnung: 75 % Beihilfeintensität × 0,72 t CO₂/MWh × mittlerer EUA-Preis "
                 "× Fallback-Faktor × förderfähiger Stromverbrauch."
             )
 
@@ -2743,9 +2741,8 @@ with tabs[5]:
 
             if results["opex_subsidy_calculated_eur_per_year"] > 0 and results["opex_subsidy_applied_eur_per_year"] == 0:
                 st.warning(
-                    "Excel-Kompatibilität: Im detaillierten OPEX-Modus wird die OPEX-Förderung in Rev. 8 "
-                    "nicht von OPEX Total bzw. den LCOH abgezogen. Deshalb unterscheiden sich hier "
-                    "'berechnet' und 'angewendet'."
+                    "Im detaillierten OPEX-Modus wird die OPEX-Förderung nicht von OPEX Total bzw. den LCOH abgezogen. "
+                    "Deshalb unterscheiden sich hier 'berechnet' und 'angewendet'."
                 )
 
             if model_inputs.funding.spk_mode == "calculator":
@@ -2895,7 +2892,7 @@ with tabs[5]:
                 b1.metric("Speicherkapazität", f"{fmt_int_de(results['battery_capacity_kwh'])} kWh")
                 b2.metric("Laden", f"{fmt_int_de(results['annual_battery_charge_kwh']/1000)} MWh/a")
                 b3.metric("Entladen", f"{fmt_int_de(results['annual_battery_discharge_kwh']/1000)} MWh/a")
-                b4.metric("Ladezyklen (Excel-KPI)", f"{fmt_int_de(results['battery_cycles_per_year'])} /a")
+                b4.metric("Kapazitätsumschläge (Bezugsenergie)", f"{fmt_int_de(results['battery_cycles_per_year'])} /a")
 
                 soc_df = pd.DataFrame({
                     "Stunde": np.arange(1, len(dispatch_df) + 1),
@@ -3191,8 +3188,9 @@ with tabs[5]:
 with tabs[6]:
     st.subheader("Sensitivitätsanalyse")
     st.caption(
-        "Die Analyse folgt der Methodik des Excel-Blatts ‚7. Grafiken‘. "
-        "Dabei wird jeweils eine Größe variiert, während die übrigen Größen auf dem Basisfall bleiben."
+        "Bei der Sensitivitätsanalyse wird jeweils eine Größe variiert, während die übrigen Größen auf dem "
+        "Basisfall bleiben. Die Änderung wirkt auf die für den jeweiligen Parameter definierte Kosten-, Erlös- "
+        "oder Betriebsgröße."
     )
 
     bundle = st.session_state.result_bundle
