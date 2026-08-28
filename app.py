@@ -45,6 +45,11 @@ from core.reporting import (
     complete_result_overview,
     json_compatible,
 )
+from core.scenario import (
+    normalize_timeseries,
+    scenario_to_json_bytes,
+    scenario_from_json_bytes,
+)
 
 import plotly.graph_objects as go
 
@@ -454,6 +459,15 @@ def build_model_inputs_from_ui() -> ModelInputs:
         ),
         section7_co2_price_eur_per_t=float(st.session_state.section7_co2_price_eur_per_t),
         section7_co2_price_escalation_per_year=float(st.session_state.section7_co2_price_escalation_per_year) / 100.0,
+        section7_co2_factor=float(
+            st.session_state.get("section7_co2_factor", PowerInputs().section7_co2_factor)
+        ),
+        section7_min_price_threshold_eur_per_mwh=float(
+            st.session_state.get(
+                "section7_min_price_threshold_eur_per_mwh",
+                PowerInputs().section7_min_price_threshold_eur_per_mwh,
+            )
+        ),
         section13k_enabled=bool(st.session_state.section13k_enabled),
         section13k_price_eur_per_mwh=float(st.session_state.section13k_price_eur_per_mwh),
         section13k_price_escalation_per_year=float(st.session_state.section13k_price_escalation_per_year) / 100.0,
@@ -541,12 +555,167 @@ def build_model_inputs_from_ui() -> ModelInputs:
         other_revenue_1_escalation_per_year=float(st.session_state.other_revenue_1_escalation_per_year) / 100.0,
         other_revenue_2_eur_per_year=float(st.session_state.other_revenue_2_eur_per_year),
         other_revenue_2_escalation_per_year=float(st.session_state.other_revenue_2_escalation_per_year) / 100.0,
+        other_revenue_eur_per_year=float(
+            st.session_state.get("other_revenue_eur_per_year", 0.0)
+        ),
     )
 
     return ModelInputs(
         system=system, capex=capex, opex=opex, power=power, revenue=revenue,
         electricity_costs=electricity_costs, funding=funding,
     )
+
+
+
+_PERCENT_UI_FIELDS = {
+    "peripheral_power_fraction",
+    "min_load_fraction",
+    "avg_efficiency_h2_per_el",
+    "degradation_per_year",
+    "individual_ely_cost_share",
+    "h2_processed_share",
+    "h2_compressor_efficiency",
+    "oxygen_compressor_efficiency",
+    "stack_replacement_share_of_ely_capex",
+    "stack_cost_degression_per_year",
+    "stack_financing_interest_rate",
+    "debt_share",
+    "debt_interest_rate",
+    "equity_interest_rate",
+    "corporate_tax_rate",
+    "lump_sum_share_of_capex",
+    "lump_sum_escalation_per_year",
+    "maintenance_share_of_capex",
+    "maintenance_escalation_per_year",
+    "personnel_escalation_per_year",
+    "reserve_remaining_plant_share_of_capex",
+    "reserve_decommissioning_share_of_capex",
+    "reserve_escalation_per_year",
+    "water_escalation_per_year",
+    "individual_opex_share_of_capex",
+    "individual_opex_escalation_per_year",
+    "baseload_price_escalation_per_year",
+    "ppa_price_escalation_per_year",
+    "section7_co2_price_escalation_per_year",
+    "section13k_price_escalation_per_year",
+    "spot_price_escalation_per_year",
+    "spot_sale_price_escalation_per_year",
+    "mobility_share",
+    "thg_revenue_share",
+    "thg_price_escalation_per_year",
+    "oxygen_price_escalation_per_year",
+    "waste_heat_usable_share",
+    "waste_heat_price_escalation_per_year",
+    "balancing_energy_escalation_per_year",
+    "other_revenue_1_escalation_per_year",
+    "other_revenue_2_escalation_per_year",
+}
+
+
+def _ui_state_values_from_model_inputs(model_inputs: ModelInputs) -> dict:
+    """Translate internal model units/modes back to the Streamlit UI representation."""
+    state: dict = {}
+    for group in (
+        model_inputs.system,
+        model_inputs.capex,
+        model_inputs.opex,
+        model_inputs.power,
+        model_inputs.electricity_costs,
+        model_inputs.revenue,
+    ):
+        state.update(asdict(group))
+
+    for key in _PERCENT_UI_FIELDS:
+        if key in state:
+            state[key] = float(state[key]) * 100.0
+
+    power = model_inputs.power
+    state["section7_co2_price_mode"] = (
+        "Jahresdaten" if power.section7_co2_price_mode == "timeseries" else "Eigener Wert"
+    )
+    state["power_sale_mode"] = "Spotmarkt" if power.power_sale_mode == "spot" else "PPA"
+
+    funding = model_inputs.funding
+    state.update(
+        {
+            "capex_subsidy_mode": {
+                "none": "Ohne",
+                "percentage": "Prozentual",
+                "absolute": "Absolut",
+            }.get(funding.capex_mode, "Ohne"),
+            "capex_subsidy_percentage": funding.capex_percentage * 100.0,
+            "capex_subsidy_absolute_eur_per_kw": funding.capex_absolute_eur_per_kw,
+            "opex_subsidy_mode": {
+                "none": "Ohne",
+                "per_kg": "Pro kg",
+                "per_full_load_hour": "Pro Volllaststunde",
+            }.get(funding.opex_mode, "Ohne"),
+            "opex_subsidy_eur_per_kg_h2": funding.opex_eur_per_kg_h2,
+            "opex_subsidy_eur_per_full_load_hour": funding.opex_eur_per_full_load_hour,
+            "electricity_subsidy_mode": {
+                "none": "Ohne",
+                "per_kg": "Pro kg",
+                "per_mwh": "Pro MWh Strom",
+            }.get(funding.electricity_mode, "Ohne"),
+            "electricity_subsidy_eur_per_kg_h2": funding.electricity_eur_per_kg_h2,
+            "electricity_subsidy_eur_per_mwh": funding.electricity_eur_per_mwh,
+            "spk_mode": {
+                "none": "Ohne",
+                "calculator": "Rechner",
+                "separate": "Separat",
+            }.get(funding.spk_mode, "Ohne"),
+            "spk_eua_price_eur_per_tco2": funding.spk_eua_price_eur_per_tco2,
+            "spk_power_consumption_factor": funding.spk_power_consumption_factor,
+            "spk_price_escalation_per_year": funding.spk_price_escalation_per_year * 100.0,
+            "spk_separate_revenue_eur_per_year": funding.spk_separate_revenue_eur_per_year,
+        }
+    )
+    return state
+
+
+def current_timeseries_from_ui() -> pd.DataFrame:
+    """Build the effective hourly input data from the current text fields.
+
+    This avoids saving or calculating with a stale ``timeseries_df`` when a
+    user edited a time-series text field immediately before using a sidebar
+    action.
+    """
+    df = pd.DataFrame(
+        {
+            "hour": np.arange(1, 8761),
+            "pv_kwh_per_kw": parse_timeseries_text(
+                st.session_state.pv_profile_text, expected_length=8760
+            ),
+            "wind_kwh_per_kw": parse_timeseries_text(
+                st.session_state.wind_profile_text, expected_length=8760
+            ),
+            "day_ahead_eur_per_mwh": parse_timeseries_text(
+                st.session_state.spot_price_text, expected_length=8760
+            ),
+            "co2_eur_per_t": parse_timeseries_text(
+                st.session_state.co2_price_text, expected_length=8760
+            ),
+            "section13k_kwh": parse_timeseries_text(
+                st.session_state.section13k_profile_text, expected_length=8760
+            ),
+        }
+    )
+    return normalize_timeseries(df)
+
+
+def apply_loaded_simulation(model_inputs: ModelInputs, timeseries_df: pd.DataFrame) -> None:
+    """Restore a saved simulation into the Streamlit session state."""
+    ts = normalize_timeseries(timeseries_df)
+    st.session_state.update(_ui_state_values_from_model_inputs(model_inputs))
+    st.session_state.timeseries_df = ts.copy()
+    st.session_state.pv_profile_text = timeseries_to_text(ts["pv_kwh_per_kw"])
+    st.session_state.wind_profile_text = timeseries_to_text(ts["wind_kwh_per_kw"])
+    st.session_state.spot_price_text = timeseries_to_text(ts["day_ahead_eur_per_mwh"])
+    st.session_state.co2_price_text = timeseries_to_text(ts["co2_eur_per_t"])
+    st.session_state.section13k_profile_text = timeseries_to_text(ts["section13k_kwh"])
+    st.session_state.result_bundle = None
+    st.session_state.ui_initialized = True
+
 
 def read_numeric_csv_series(uploaded_file, expected_length: int = 8760) -> np.ndarray:
     df = pd.read_csv(uploaded_file)
@@ -573,10 +742,89 @@ init_ui_state()
 # ============================================================
 
 
+# ------------------------------------------------------------
+# Simulation speichern / laden
+# ------------------------------------------------------------
+
+load_message = st.session_state.pop("_scenario_load_message", None)
+if load_message:
+    st.sidebar.success(load_message)
+
+with st.sidebar.expander("Simulation speichern / laden", expanded=False):
+    st.caption(
+        "Speichert alle Eingaben einschließlich der fünf 8760-h-Zeitreihen. "
+        "Die Datei kann später wieder vollständig geladen werden."
+    )
+
+    try:
+        scenario_inputs = build_model_inputs_from_ui()
+        scenario_timeseries = current_timeseries_from_ui()
+        scenario_json = scenario_to_json_bytes(scenario_inputs, scenario_timeseries)
+        save_error = None
+    except Exception as exc:
+        scenario_json = b""
+        save_error = str(exc)
+
+    st.download_button(
+        "Simulation speichern",
+        data=scenario_json,
+        file_name="lcoh_simulation.json",
+        mime="application/json",
+        use_container_width=True,
+        disabled=save_error is not None,
+        help=(
+            "Lädt eine JSON-Datei mit sämtlichen aktuellen Simulationseingaben und "
+            "Zeitreihen herunter. Ergebnisse werden bewusst nicht mitgespeichert."
+        ),
+    )
+    if save_error is not None:
+        st.warning(f"Simulation kann noch nicht gespeichert werden: {save_error}")
+
+    scenario_upload = st.file_uploader(
+        "Simulation laden",
+        type=["json"],
+        key="scenario_json_upload",
+        help=(
+            "Wähle eine zuvor mit 'Simulation speichern' erzeugte JSON-Datei. "
+            "Beim Laden werden die aktuellen Eingaben ersetzt."
+        ),
+    )
+    if st.button(
+        "Geladene Simulation übernehmen",
+        key="load_scenario_button",
+        use_container_width=True,
+        disabled=scenario_upload is None,
+    ):
+        try:
+            loaded_inputs, loaded_timeseries = scenario_from_json_bytes(
+                scenario_upload.getvalue()
+            )
+            apply_loaded_simulation(loaded_inputs, loaded_timeseries)
+
+            # Recalculate immediately so that a loaded simulation is restored as
+            # a complete working state, without reusing old saved results.
+            loaded_dispatch = build_dispatch(loaded_inputs, loaded_timeseries)
+            loaded_results = compute_lcoh(loaded_inputs, loaded_dispatch)
+            st.session_state.result_bundle = {
+                "inputs": loaded_inputs,
+                "dispatch": loaded_dispatch,
+                "results": loaded_results,
+            }
+            st.session_state._scenario_load_message = (
+                "Simulation erfolgreich geladen und neu berechnet."
+            )
+            st.rerun()
+        except Exception as exc:
+            st.error(f"Simulation konnte nicht geladen werden: {exc}")
+
+st.sidebar.divider()
+
 if st.sidebar.button("Berechnung starten", type="primary", use_container_width=True):
     try:
         model_inputs = build_model_inputs_from_ui()
-        dispatch_df = build_dispatch(model_inputs, st.session_state.timeseries_df)
+        current_ts = current_timeseries_from_ui()
+        st.session_state.timeseries_df = current_ts.copy()
+        dispatch_df = build_dispatch(model_inputs, current_ts)
         results = compute_lcoh(model_inputs, dispatch_df)
 
         st.session_state.result_bundle = {
@@ -2902,16 +3150,8 @@ with tabs[5]:
         # ----------------------------------------------------
         with st.expander("Export", expanded=False):
             export_payload = {
-                "schema_version": 2,
-                "inputs": {
-                    "system": asdict(model_inputs.system),
-                    "capex": asdict(model_inputs.capex),
-                    "opex": asdict(model_inputs.opex),
-                    "power": asdict(model_inputs.power),
-                    "electricity_costs": asdict(model_inputs.electricity_costs),
-                    "revenue": asdict(model_inputs.revenue),
-                    "funding": asdict(model_inputs.funding),
-                },
+                "type": "lcoh_results",
+                "schema_version": 3,
                 "results": results,
                 "derived_results": derived_results,
                 "result_overview": overview_raw_df.to_dict(orient="records"),
