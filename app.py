@@ -54,10 +54,6 @@ from core.scenario import (
 
 import plotly.graph_objects as go
 
-import locale
-
-locale.setlocale(locale.LC_ALL, "de_DE.UTF-8")
-
 def de_number(value, decimals=2):
     if value is None:
         return "-"
