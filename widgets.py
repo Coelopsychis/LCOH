@@ -1,25 +1,13 @@
 import streamlit as st
 
 
-def percent_slider(
-    label: str,
-    key: str,
-    help: str | None = None,
-) -> float:
-    """
-    Streamlit Slider für Prozentwerte.
-
-    UI: 0-100 %
-    Rückgabewert: 0-1
-    """
-
-    percent_value = st.slider(
+def percent_slider(label: str, *, key: str, help: str | None = None) -> None:
+    st.slider(
         label,
-        min_value=0,
-        max_value=100,
+        min_value=0.0,
+        max_value=100.0,
+        step=0.1,
         key=key,
-        format="%d %%",   # Anzeige mit %
+        format="%.1f%%",
         help=help,
     )
-
-    return percent_value / 100
