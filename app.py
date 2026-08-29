@@ -804,8 +804,7 @@ with st.sidebar.expander("Simulation speichern / laden", expanded=False):
         use_container_width=True,
         disabled=save_error is not None,
         help=(
-            "Lädt eine JSON-Datei mit sämtlichen aktuellen Simulationseingaben und "
-            "Zeitreihen herunter. Ergebnisse werden bewusst nicht mitgespeichert."
+            "Lädt eine JSON-Datei mit sämtlichen aktuellen Simulationseingaben und Zeitreihen herunter."
         ),
     )
     if save_error is not None:
