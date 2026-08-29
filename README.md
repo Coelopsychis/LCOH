@@ -139,8 +139,8 @@ Benötigte Python-Pakete:
 Repository klonen und in den Projektordner wechseln:
 
 ```bash
-git clone <REPOSITORY-URL>
-cd <REPOSITORY-ORDNER>
+git clone https://github.com/Coelopsychis/LCOH.git
+cd LCOH
 ```
 
 Virtuelle Umgebung erstellen:
