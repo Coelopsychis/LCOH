@@ -860,13 +860,13 @@ st.caption(
 
 tabs = st.tabs(
     [
-        "1) System",
-        "2) CAPEX",
-        "3) OPEX",
-        "4) Strom & Zeitreihen",
-        "5) Förderungen",
-        "6) Ergebnisse",
-        "7) Sensitivität",
+        "System",
+        "CAPEX",
+        "OPEX",
+        "Strom & Zeitreihen",
+        "Förderungen",
+        "Ergebnisse",
+        "Sensitivität",
     ]
 )
 
