@@ -247,7 +247,7 @@ Der LCOH wird aus annualisierten Kosten und Erlösen sowie der jährlichen Wasse
 
 Vereinfacht:
 
-\[
+$$
 LCOH =
 \frac{
 \text{jährliche Investitions- und Finanzierungskosten}
@@ -259,7 +259,7 @@ LCOH =
 }{
 \text{jährliche H₂-Produktion}
 }
-\]
+$$
 
 Die Betriebsgrößen werden zuvor aus dem stündlichen Dispatch über 8.760 Stunden bestimmt.
 
