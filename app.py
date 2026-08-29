@@ -59,7 +59,7 @@ def de_number(value, decimals=2):
         return "-"
     return f"{value:,.{decimals}f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
-st.set_page_config(page_title="Berechnungstool LCOH", layout="wide")
+st.set_page_config(page_title="LCOH-Berechnungstool", layout="wide")
 
 
 PLOTLY_CONFIG = {
