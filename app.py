@@ -3161,8 +3161,7 @@ with tabs[5]:
             )
 
             # Long-form CSV: one KPI per row, including category, unit, technical
-            # key and raw model value. This is substantially more complete and
-            # easier to process than the previous single-row results dict export.
+            # key and raw model value.
             export_csv_df = overview_raw_df.copy()
             export_csv = dataframe_to_csv_bytes(export_csv_df)
             st.download_button(
@@ -3191,7 +3190,7 @@ with tabs[6]:
         results = bundle["results"]
         model_inputs = bundle["inputs"]
 
-        c1, c2, c3 = st.columns([1.0, 1.0, 1.4])
+        c1, c2 = st.columns(2)
         with c1:
             sensitivity_range_percent = st.slider(
                 "Variationsbereich ± [%]",
@@ -3216,18 +3215,6 @@ with tabs[6]:
                 format="%d",
             )
             st.session_state.sensitivity_points = sensitivity_points
-        with c3:
-            label_to_key = {p.label: p.key for p in SENSITIVITY_PARAMETERS}
-            key_to_label = {p.key: p.label for p in SENSITIVITY_PARAMETERS}
-            selected_label = st.selectbox(
-                "Parameter für Detailkurve",
-                options=list(label_to_key),
-                index=list(label_to_key).index(
-                    key_to_label.get(st.session_state.sensitivity_parameter, "Strompreis")
-                ),
-                help=HELP["sensitivity_parameter"],
-            )
-            st.session_state.sensitivity_parameter = label_to_key[selected_label]
 
         relative_range = sensitivity_range_percent / 100.0
         tornado_df = compute_tornado(model_inputs, results, relative_range)
@@ -3285,8 +3272,28 @@ with tabs[6]:
             },
         )
 
+        st.markdown("### Detailkurve")
+
+        label_to_key = {p.label: p.key for p in SENSITIVITY_PARAMETERS}
+        key_to_label = {p.key: p.label for p in SENSITIVITY_PARAMETERS}
+
+        selected_label = st.selectbox(
+            "Parameter für Detailkurve",
+            options=list(label_to_key),
+            index=list(label_to_key).index(
+                key_to_label.get(
+                    st.session_state.sensitivity_parameter,
+                    "Strompreis",
+                )
+            ),
+            help=HELP["sensitivity_parameter"],
+        )
+
+        st.session_state.sensitivity_parameter = label_to_key[selected_label]
+
         parameter_key = st.session_state.sensitivity_parameter
         parameter = PARAMETER_BY_KEY[parameter_key]
+
         curve_df = compute_sensitivity_curve(
             model_inputs,
             results,
@@ -3295,7 +3302,6 @@ with tabs[6]:
             points=sensitivity_points,
         )
 
-        st.markdown(f"### Detailkurve: {parameter.label}")
         st.caption(parameter.description)
         curve_fig = go.Figure(
             go.Scatter(
