@@ -80,7 +80,7 @@ def render_plotly(fig: go.Figure) -> None:
     )
     st.plotly_chart(
         fig,
-        use_container_width=True,
+        width="stretch",
         theme="streamlit",
         config=PLOTLY_CONFIG,
     )
@@ -739,7 +739,7 @@ init_ui_state()
 # ============================================================
 
 
-if st.sidebar.button("Berechnung starten", type="primary", use_container_width=True):
+if st.sidebar.button("Berechnung starten", type="primary", width="stretch"):
     try:
         model_inputs = build_model_inputs_from_ui()
         current_ts = current_timeseries_from_ui()
@@ -801,7 +801,7 @@ with st.sidebar.expander("Simulation speichern / laden", expanded=False):
         data=scenario_json,
         file_name="lcoh_simulation.json",
         mime="application/json",
-        use_container_width=True,
+        width="stretch",
         disabled=save_error is not None,
         help=(
             "Lädt eine JSON-Datei mit sämtlichen aktuellen Simulationseingaben und Zeitreihen herunter."
@@ -822,7 +822,7 @@ with st.sidebar.expander("Simulation speichern / laden", expanded=False):
     if st.button(
         "Geladene Simulation übernehmen",
         key="load_scenario_button",
-        use_container_width=True,
+        width="stretch",
         disabled=scenario_upload is None,
     ):
         try:
@@ -2836,7 +2836,7 @@ with tabs[5]:
                     ],
                 }
             )
-            st.dataframe(addons_df, use_container_width=True, hide_index=True)
+            st.dataframe(addons_df, width="stretch", hide_index=True)
 
         # ----------------------------------------------------
         # Betriebskennzahlen
@@ -3133,7 +3133,7 @@ with tabs[5]:
                 "zusätzlich auf der Ergebnisseite abgeleiteten KPIs. Damit sind auch Werte aus "
                 "den Detail-Expandern und Diagramm-Aggregaten zentral auffindbar."
             )
-            st.dataframe(overview_display_df, use_container_width=True, hide_index=True)
+            st.dataframe(overview_display_df, width="stretch", hide_index=True)
 
         # ----------------------------------------------------
         # Export
@@ -3249,7 +3249,7 @@ with tabs[6]:
                 "Basis [€/kg]",
                 f"LCOH +{sensitivity_range_percent} % [€/kg]",
             ]],
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
             column_config={
                 f"LCOH −{sensitivity_range_percent} % [€/kg]": st.column_config.NumberColumn(format="%.3f"),
