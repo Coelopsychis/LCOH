@@ -2604,7 +2604,7 @@ with tabs[5]:
         k7.metric("Strompreis Ely", f"{fmt_de(results['electricity_price_ely_eur_per_mwh'], 2)} €/MWh")
         k8.metric("LCOH vor lfd. Entlastungen", f"{fmt_de(gross_running_lcoh, 2)} €/kg")
         k9.metric("Lfd. Förderungen & Erlöse", f"{fmt_de(operating_relief/1e6, 2)} Mio. €/a")
-        k10.metric("WACC (KPI)", fmt_pct_de(results["wacc"], 2))
+        k10.metric("WACC", fmt_pct_de(results["wacc"], 2))
 
         bridge_df = lcoh_bridge(results)
         cost_dist_df = positive_cost_distribution(results)
