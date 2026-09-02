@@ -2725,7 +2725,7 @@ with tabs[5]:
             c7.metric("Strompreisförderung", f"{fmt_int_de(results['electricity_subsidy_eur_per_year'])} €/a")
             c8.metric("Ersparnis Privilegierungen", f"{fmt_int_de(results['privilege_savings_eur_per_year'])} €/a")
 
-            c9, c10, c11 = st.columns(3)
+            c9, c10, c11, c12 = st.columns(4)
             c9.metric("Strompreiskompensation", f"{fmt_int_de(results['spk_revenue_eur_per_year'])} €/a")
             c10.metric("Förderungen/Privilegien gesamt", f"{fmt_int_de(results['annual_funding_total_eur_per_year'])} €/a")
             c11.metric("OPEX-Modus", "Pauschal" if results['opex_calculation_mode'] == 'lump_sum' else "Detailliert")
