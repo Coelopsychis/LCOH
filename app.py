@@ -877,7 +877,7 @@ tabs = st.tabs(
 with tabs[0]:
     st.subheader("Systemparameter")
 
-    with st.expander("Allgemeine Projektparameter", expanded=True):
+    with st.expander("Allgemeine Projektparameter"):
         c1, c2, c3 = st.columns(3)
 
         with c1:
@@ -902,7 +902,7 @@ with tabs[0]:
                 format="%d",
             )
 
-    with st.expander("Leistungsdaten", expanded=True):
+    with st.expander("Leistungsdaten"):
         c1, c2, c3 = st.columns(3)
 
         with c1:
@@ -938,7 +938,7 @@ with tabs[0]:
                 help=HELP["min_load_fraction"],
             )
 
-    with st.expander("Wirkungsgrad & Degradation", expanded=True):
+    with st.expander("Wirkungsgrad & Degradation"):
         c1, c2, c3 = st.columns(3)
 
         with c1:
@@ -974,7 +974,7 @@ with tabs[0]:
 with tabs[1]:
     st.subheader("CAPEX & Finanzierung")
 
-    with st.expander("Allgemeine CAPEX", expanded=True):
+    with st.expander("Allgemeine CAPEX"):
         c1, c2 = st.columns(2)
 
         with c1:
@@ -1053,7 +1053,7 @@ with tabs[1]:
                 format="%.0f",
             )
 
-    with st.expander("Stacktausch und Finanzierung", expanded=True):
+    with st.expander("Stacktausch und Finanzierung"):
         st.markdown("**Stacktausch**")
         c1, c2, c3 = st.columns(3)
         with c1:
@@ -1333,7 +1333,7 @@ with tabs[2]:
                 "weiterhin angezeigt, aber für OPEX Total nicht verwendet."
             )
 
-    with st.expander("Wartung & Instandhaltung", expanded=True):
+    with st.expander("Wartung & Instandhaltung"):
         c1, c2 = st.columns(2)
 
         with c1:
@@ -1358,7 +1358,7 @@ with tabs[2]:
                 help=HELP["maintenance_escalation_per_year"],
             )
 
-    with st.expander("Personalkosten", expanded=True):
+    with st.expander("Personalkosten"):
         c1, c2 = st.columns(2)
 
         with c1:
@@ -1383,7 +1383,7 @@ with tabs[2]:
                 help=HELP["personnel_escalation_per_year"],
             )
 
-    with st.expander("Rückstellungen (ohne Stacktausch)", expanded=True):
+    with st.expander("Rückstellungen (ohne Stacktausch)"):
         c1, c2, c3 = st.columns(3)
 
         with c1:
@@ -1419,7 +1419,7 @@ with tabs[2]:
                 help=HELP["reserve_escalation_per_year"],
             )
 
-    with st.expander("Wasser", expanded=True):
+    with st.expander("Wasser"):
         c1, c2 = st.columns(2)
 
         with c1:
@@ -1462,7 +1462,7 @@ with tabs[2]:
                 help=HELP["water_escalation_per_year"],
             )
 
-    with st.expander("Individuelle OPEX", expanded=True):
+    with st.expander("Individuelle OPEX"):
         c1, c2 = st.columns(2)
 
         with c1:
@@ -2258,7 +2258,7 @@ with tabs[3]:
     # ------------------------------------------------------------
     # Zeitreihen-Vorschau
     # ------------------------------------------------------------
-    with st.expander("Zeitreihen-Vorschau", expanded=True):
+    with st.expander("Zeitreihen-Vorschau"):
         preview_df = st.session_state.timeseries_df.copy().reset_index(drop=True)
 
         # Textfelder noch einmal explizit in den DataFrame übernehmen
@@ -2412,7 +2412,7 @@ with tabs[4]:
         "Strompreisprivilegierungen werden weiterhin im Tab 'Strom & Zeitreihen' eingestellt."
     )
 
-    with st.expander("CAPEX-Förderung", expanded=True):
+    with st.expander("CAPEX-Förderung"):
         st.selectbox(
             "CAPEX-Förderung auswählen",
             options=["Ohne", "Prozentual", "Absolut"],
@@ -2440,7 +2440,7 @@ with tabs[4]:
             )
         st.caption("Die Gesamtförderung reduziert direkt die zu finanzierenden CAPEX; für die Förderübersicht wird sie gleichmäßig auf die Projektlaufzeit verteilt.")
 
-    with st.expander("OPEX-Förderung", expanded=True):
+    with st.expander("OPEX-Förderung"):
         st.selectbox(
             "OPEX-Förderung auswählen",
             options=["Ohne", "Pro kg", "Pro Volllaststunde"],
@@ -2470,7 +2470,7 @@ with tabs[4]:
                 "aber nicht von OPEX Total bzw. den LCOH abgezogen. Bei aktivierter pauschaler OPEX wird sie abgezogen."
             )
 
-    with st.expander("Strompreisförderung", expanded=True):
+    with st.expander("Strompreisförderung"):
         st.selectbox(
             "Strompreisförderung auswählen",
             options=["Ohne", "Pro kg", "Pro MWh Strom"],
@@ -2495,7 +2495,7 @@ with tabs[4]:
                 format="%.1f",
             )
 
-    with st.expander("Strompreiskompensation (SPK)", expanded=True):
+    with st.expander("Strompreiskompensation (SPK)"):
         st.selectbox(
             "Strompreiskompensation",
             options=["Ohne", "Rechner", "Separat"],
@@ -2912,7 +2912,7 @@ with tabs[5]:
         # ----------------------------------------------------
         # Visualisierung
         # ----------------------------------------------------
-        with st.expander("Visualisierung", expanded=True):
+        with st.expander("Visualisierung"):
             col1, col2 = st.columns(2)
 
             with col1:
