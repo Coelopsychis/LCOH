@@ -3190,31 +3190,17 @@ with tabs[6]:
         results = bundle["results"]
         model_inputs = bundle["inputs"]
 
-        c1, c2 = st.columns(2)
-        with c1:
-            sensitivity_range_percent = st.slider(
-                "Variationsbereich ± [%]",
-                min_value=5,
-                max_value=80,
-                value=int(st.session_state.sensitivity_range_percent),
-                step=5,
-                key=SENSITIVITY_RANGE_WIDGET_KEY,
-                help=HELP["sensitivity_range_percent"],
-                format="%d%%",
-            )
-            st.session_state.sensitivity_range_percent = sensitivity_range_percent
-        with c2:
-            sensitivity_points = st.slider(
-                "Punkte der Detailkurve",
-                min_value=5,
-                max_value=31,
-                value=int(st.session_state.sensitivity_points),
-                step=2,
-                key=SENSITIVITY_POINTS_WIDGET_KEY,
-                help=HELP["sensitivity_points"],
-                format="%d",
-            )
-            st.session_state.sensitivity_points = sensitivity_points
+        sensitivity_range_percent = st.slider(
+            "Variationsbereich ± [%]",
+            min_value=5,
+            max_value=80,
+            value=int(st.session_state.sensitivity_range_percent),
+            step=5,
+            key=SENSITIVITY_RANGE_WIDGET_KEY,
+            help=HELP["sensitivity_range_percent"],
+            format="%d%%",
+        )
+        st.session_state.sensitivity_range_percent = sensitivity_range_percent
 
         relative_range = sensitivity_range_percent / 100.0
         tornado_df = compute_tornado(model_inputs, results, relative_range)
@@ -3274,26 +3260,35 @@ with tabs[6]:
 
         st.markdown("### Detailkurve")
 
-        label_to_key = {p.label: p.key for p in SENSITIVITY_PARAMETERS}
-        key_to_label = {p.key: p.label for p in SENSITIVITY_PARAMETERS}
+        detail_parameter_col, detail_points_col = st.columns(2)
+        with detail_parameter_col:
+            label_to_key = {p.label: p.key for p in SENSITIVITY_PARAMETERS}
+            key_to_label = {p.key: p.label for p in SENSITIVITY_PARAMETERS}
+            selected_label = st.selectbox(
+                "Parameter für Detailkurve",
+                options=list(label_to_key),
+                index=list(label_to_key).index(
+                    key_to_label.get(st.session_state.sensitivity_parameter, "Strompreis")
+                ),
+                help=HELP["sensitivity_parameter"],
+            )
+            st.session_state.sensitivity_parameter = label_to_key[selected_label]
 
-        selected_label = st.selectbox(
-            "Parameter für Detailkurve",
-            options=list(label_to_key),
-            index=list(label_to_key).index(
-                key_to_label.get(
-                    st.session_state.sensitivity_parameter,
-                    "Strompreis",
-                )
-            ),
-            help=HELP["sensitivity_parameter"],
-        )
-
-        st.session_state.sensitivity_parameter = label_to_key[selected_label]
+        with detail_points_col:
+            sensitivity_points = st.slider(
+                "Punkte der Detailkurve",
+                min_value=5,
+                max_value=31,
+                value=int(st.session_state.sensitivity_points),
+                step=2,
+                key=SENSITIVITY_POINTS_WIDGET_KEY,
+                help=HELP["sensitivity_points"],
+                format="%d",
+            )
+            st.session_state.sensitivity_points = sensitivity_points
 
         parameter_key = st.session_state.sensitivity_parameter
         parameter = PARAMETER_BY_KEY[parameter_key]
-
         curve_df = compute_sensitivity_curve(
             model_inputs,
             results,
