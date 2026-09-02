@@ -1067,7 +1067,7 @@ with tabs[1]:
         with c2:
             st.slider(
                 "Kostendegression Stack [%/a]",
-                min_value=-20.0, max_value=20.0, step=0.5,
+                min_value=-20.0, max_value=20.0, step=0.1,
                 key="stack_cost_degression_per_year",
                 help=HELP["stack_cost_degression"],
                 format="%.1f%%",
@@ -1075,7 +1075,7 @@ with tabs[1]:
         with c3:
             st.slider(
                 "Zins Stackfinanzierung [%/a]",
-                min_value=0.0, max_value=30.0, step=0.5,
+                min_value=0.0, max_value=30.0, step=0.1,
                 key="stack_financing_interest_rate",
                 help=HELP["stack_financing_interest_rate"],
                 format="%.1f%%",
@@ -1086,10 +1086,10 @@ with tabs[1]:
         with c1:
             st.slider("Fremdkapitalquote [%]", min_value=0.0, max_value=100.0, step=1.0, key="debt_share", help=HELP["debt_share"], format="%.0f%%")
         with c2:
-            st.slider("Zins Fremdkapital [%/a]", min_value=0.0, max_value=30.0, step=0.5, key="debt_interest_rate", help=HELP["debt_interest_rate"], format="%.1f%%")
+            st.slider("Zins Fremdkapital [%/a]", min_value=0.0, max_value=30.0, step=0.1, key="debt_interest_rate", help=HELP["debt_interest_rate"], format="%.1f%%")
         with c3:
             st.slider(
-                "Kalkulatorischer Zins Eigenkapital [%/a]", min_value=0.0, max_value=30.0, step=0.5,
+                "Kalkulatorischer Zins Eigenkapital [%/a]", min_value=0.0, max_value=30.0, step=0.1,
                 key="equity_interest_rate", help=HELP["equity_interest_rate"],
                 format="%.1f%%",
             )
@@ -1129,7 +1129,7 @@ with tabs[1]:
             )
         with c3:
             st.slider(
-                "Preisentwicklung Abwärme [%/a]", min_value=-20.0, max_value=30.0, step=0.5,
+                "Preisentwicklung Abwärme [%/a]", min_value=-20.0, max_value=30.0, step=0.1,
                 key="waste_heat_price_escalation_per_year",
                 disabled=not st.session_state.waste_heat_enabled,
                 help=HELP["waste_heat_price_escalation_per_year"],
@@ -1189,7 +1189,7 @@ with tabs[1]:
                 format="%.0f",
             )
             st.slider(
-                "Preisentwicklung Sauerstoff [%/a]", min_value=-20.0, max_value=30.0, step=0.5,
+                "Preisentwicklung Sauerstoff [%/a]", min_value=-20.0, max_value=30.0, step=0.1,
                 key="oxygen_price_escalation_per_year",
                 disabled=not st.session_state.oxygen_enabled,
                 help=HELP["oxygen_price_escalation_per_year"],
@@ -1513,13 +1513,13 @@ with tabs[2]:
             )
         with c3:
             st.number_input(
-                "THG-Intensität grüner H₂ [kg CO₂/GJ]", min_value=0.0, max_value=100.0, step=0.5,
+                "THG-Intensität grüner H₂ [kg CO₂/GJ]", min_value=0.0, max_value=100.0, step=0.1,
                 key="h2_thg_intensity_kgco2_per_gj", disabled=not st.session_state.thg_enabled,
                 help=HELP["h2_thg_intensity_kgco2_per_gj"],
                 format="%.1f",
             )
             st.slider(
-                "Preisentwicklung THG-Quote [%/a]", min_value=-20.0, max_value=30.0, step=0.5,
+                "Preisentwicklung THG-Quote [%/a]", min_value=-20.0, max_value=30.0, step=0.1,
                 key="thg_price_escalation_per_year", disabled=not st.session_state.thg_enabled,
                 help=HELP["thg_price_escalation_per_year"],
                 format="%.1f%%",
@@ -1544,7 +1544,7 @@ with tabs[2]:
             )
         with c3:
             st.slider(
-                "Jährliche Preissteigerung [%/a]", min_value=-20.0, max_value=30.0, step=0.5,
+                "Jährliche Preissteigerung [%/a]", min_value=-20.0, max_value=30.0, step=0.1,
                 key="balancing_energy_escalation_per_year",
                 disabled=not st.session_state.balancing_energy_enabled,
                 help=HELP["balancing_energy_escalation_per_year"],
@@ -1571,7 +1571,7 @@ with tabs[2]:
                 format="%.0f",
             )
             st.slider(
-                "Preisentwicklung Sonstige 1 [%/a]", min_value=-20.0, max_value=30.0, step=0.5,
+                "Preisentwicklung Sonstige 1 [%/a]", min_value=-20.0, max_value=30.0, step=0.1,
                 key="other_revenue_1_escalation_per_year",
                 disabled=not st.session_state.other_revenues_enabled,
                 help=HELP["other_revenue_1_escalation_per_year"],
@@ -1587,7 +1587,7 @@ with tabs[2]:
                 format="%.0f",
             )
             st.slider(
-                "Preisentwicklung Sonstige 2 [%/a]", min_value=-20.0, max_value=30.0, step=0.5,
+                "Preisentwicklung Sonstige 2 [%/a]", min_value=-20.0, max_value=30.0, step=0.1,
                 key="other_revenue_2_escalation_per_year",
                 disabled=not st.session_state.other_revenues_enabled,
                 help=HELP["other_revenue_2_escalation_per_year"],
@@ -1772,7 +1772,7 @@ with tabs[3]:
             "Preisentwicklung CO₂ [%/a]",
             min_value=-20.0,
             max_value=30.0,
-            step=0.5,
+            step=0.1,
             key="section7_co2_price_escalation_per_year",
             disabled=not st.session_state.section7_enabled,
             help=HELP["section7_co2_price_escalation_per_year"],
@@ -1854,7 +1854,7 @@ with tabs[3]:
                 "Preisentwicklung [%/a]",
                 min_value=-20.0,
                 max_value=30.0,
-                step=0.5,
+                step=0.1,
                 key="section13k_price_escalation_per_year",
                 disabled=not st.session_state.section13k_enabled,
                 help=HELP["section13k_price_escalation_per_year"],
@@ -2131,7 +2131,7 @@ with tabs[3]:
 
         st.slider(
             "Preisentwicklung Spot-Einkauf [%/a]",
-            min_value=-20.0, max_value=30.0, step=0.5,
+            min_value=-20.0, max_value=30.0, step=0.1,
             key="spot_price_escalation_per_year",
             disabled=not st.session_state.spot_purchase_enabled,
             help=HELP["spot_price_escalation_per_year"],
@@ -2178,7 +2178,7 @@ with tabs[3]:
 
         st.slider(
             "Jährliche Verkaufspreisentwicklung [%/a]",
-            min_value=-20.0, max_value=30.0, step=0.5,
+            min_value=-20.0, max_value=30.0, step=0.1,
             key="spot_sale_price_escalation_per_year",
             disabled=not st.session_state.spot_sale_enabled,
             help=HELP["spot_sale_price_escalation_per_year"],
@@ -2423,7 +2423,7 @@ with tabs[4]:
         with c1:
             st.slider(
                 "Prozentuale Förderung [% der CAPEX vor Förderung]",
-                min_value=0.0, max_value=100.0, step=0.5,
+                min_value=0.0, max_value=100.0, step=0.1,
                 key="capex_subsidy_percentage",
                 disabled=st.session_state.capex_subsidy_mode != "Prozentual",
                 help=HELP["capex_subsidy_percentage"],
@@ -2521,7 +2521,7 @@ with tabs[4]:
         with c2:
             st.slider(
                 "Jährliche Preisentwicklung SPK [%/a]",
-                min_value=-20.0, max_value=30.0, step=0.5,
+                min_value=-20.0, max_value=30.0, step=0.1,
                 key="spk_price_escalation_per_year",
                 disabled=st.session_state.spk_mode == "Ohne",
                 help=HELP["spk_price_escalation_per_year"],
