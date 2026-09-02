@@ -2651,6 +2651,174 @@ with tabs[5]:
             )
             render_plotly(pie_cost)
 
+        # ----------------------------------------------------
+        # Visualisierung
+        # ----------------------------------------------------
+        with st.expander("Visualisierung"):
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.markdown("### Dauerlinie der Auslastung")
+                duration_df = utilization_duration_curve(dispatch_df)
+                if duration_df.empty:
+                    st.info("Für die Dauerlinie sind keine gültigen Auslastungsdaten vorhanden.")
+                else:
+                    duration_fig = go.Figure(
+                        go.Scatter(
+                            x=duration_df["Stundenrang"],
+                            y=duration_df["Auslastung [%]"],
+                            mode="lines",
+                            name="Auslastung",
+                            hovertemplate=(
+                                "Stundenrang %{x:,.0f}<br>"
+                                "Auslastung %{y:.1f} %<extra></extra>"
+                            ),
+                        )
+                    )
+                    duration_fig.update_layout(
+                        xaxis_title="Stundenrang [h/a]",
+                        yaxis_title="Auslastung [%]",
+                        yaxis=dict(range=[0, 100]),
+                        height=360,
+                        margin=dict(l=20, r=20, t=20, b=20),
+                        showlegend=False,
+                    )
+                    render_plotly(duration_fig)
+
+            with col2:
+                st.markdown("### Strommix (Jahressummen)")
+                mix_df = pd.DataFrame(
+                    {
+                        "Kategorie": [
+                            "PPA verfügbar",
+                            "PPA genutzt",
+                            "§7-Bezug",
+                            "§13k-Bezug",
+                            "Spotbezug",
+                            "Spotverkauf",
+                            "PPA-Verkauf",
+                            "Abregelung",
+                            "Systemverbrauch",
+                            "Ely-Verbrauch",
+                            "Peripherie",
+                            "H₂-Verdichtung",
+                            "O₂-Verdichtung",
+                        ],
+                        "MWh/a": [
+                            dispatch_df["ppa_available_kwh"].sum() / 1000.0,
+                            dispatch_df["ppa_used_kwh"].sum() / 1000.0,
+                            dispatch_df["section7_purchase_kwh"].sum() / 1000.0,
+                            dispatch_df["section13k_purchase_kwh"].sum() / 1000.0,
+                            dispatch_df["spot_purchase_kwh"].sum() / 1000.0,
+                            dispatch_df["spot_sale_kwh"].sum() / 1000.0,
+                            dispatch_df["ppa_sale_kwh"].sum() / 1000.0,
+                            dispatch_df["curtailed_kwh"].sum() / 1000.0,
+                            dispatch_df["system_consumption_kwh"].sum() / 1000.0,
+                            dispatch_df["ely_consumption_kwh"].sum() / 1000.0,
+                            dispatch_df["peripheral_consumption_kwh"].sum() / 1000.0,
+                            dispatch_df["h2_compressor_consumption_kwh"].sum() / 1000.0,
+                            dispatch_df["oxygen_compressor_consumption_kwh"].sum() / 1000.0,
+                        ],
+                    }
+                )
+                mix_fig = go.Figure(
+                    go.Bar(
+                        x=mix_df["MWh/a"],
+                        y=mix_df["Kategorie"],
+                        orientation="h",
+                        name="Energie",
+                        hovertemplate="%{y}<br>%{x:,.0f} MWh/a<extra></extra>",
+                    )
+                )
+                mix_fig.update_layout(
+                    xaxis_title="Energie [MWh/a]",
+                    yaxis_title="",
+                    yaxis=dict(autorange="reversed"),
+                    height=430,
+                    margin=dict(l=20, r=20, t=20, b=45),
+                    showlegend=False,
+                )
+                render_plotly(mix_fig)
+
+            st.markdown("### Kostenstruktur (jährlich)")
+            cost_breakdown_df = pd.DataFrame(
+                {
+                    "Kategorie": [
+                        "Finanzierung (FK + EK)",
+                        "Stackersatz",
+                        "Wartung & Instandhaltung",
+                        "Personal",
+                        "Rückstellungen",
+                        "Wasser",
+                        "Individuelle OPEX",
+                        "Baseload-PPA",
+                        "PV-PPA",
+                        "Wind-PPA",
+                        "§7",
+                        "§13k",
+                        "Spotbezug",
+                        "Stromnebenkosten Ely",
+                        "Stromnebenkosten Rest",
+                        "Strompreisförderung",
+                        "Strompreiskompensation",
+                        "Spotverkauf (Erlös)",
+                        "PPA-Verkauf (Erlös)",
+                        "THG-Quote (Erlös)",
+                        "Sauerstoff (Erlös)",
+                        "Abwärme (Erlös)",
+                        "Regelenergie (Erlös)",
+                        "Sonstige Einnahmen 1",
+                        "Sonstige Einnahmen 2",
+                    ],
+                    "€/a": [
+                        results["financing_eur_per_year"],
+                        results["stack_replacement_eur_per_year"],
+                        results["maintenance_eur_per_year"],
+                        results["personnel_eur_per_year"],
+                        results["reserves_total_eur_per_year"],
+                        results["water_eur_per_year"],
+                        results["individual_opex_eur_per_year"],
+                        results["annual_baseload_cost_eur"],
+                        results["annual_pv_ppa_cost_eur"],
+                        results["annual_wind_ppa_cost_eur"],
+                        results["annual_section7_cost_eur"],
+                        results["annual_section13k_cost_eur"],
+                        results["annual_spot_purchase_cost_eur"],
+                        results["ely_power_addons_eur_per_year"],
+                        results["rest_power_addons_eur_per_year"],
+                        -results["electricity_subsidy_eur_per_year"],
+                        -results["spk_revenue_eur_per_year"],
+                        -results["annual_spot_sale_revenue_eur"],
+                        -results["annual_ppa_sale_revenue_eur"],
+                        -results["thg_revenue_eur_per_year"],
+                        -results["oxygen_revenue_eur_per_year"],
+                        -results["waste_heat_revenue_eur_per_year"],
+                        -results["balancing_energy_revenue_eur_per_year"],
+                        -results["other_revenue_1_eur_per_year"],
+                        -results["other_revenue_2_eur_per_year"],
+                    ],
+                }
+            )
+            cost_breakdown_fig = go.Figure(
+                go.Bar(
+                    x=cost_breakdown_df["€/a"],
+                    y=cost_breakdown_df["Kategorie"],
+                    orientation="h",
+                    name="Kosten / Erlöse",
+                    hovertemplate="%{y}<br>%{x:,.0f} €/a<extra></extra>",
+                )
+            )
+            cost_breakdown_fig.add_vline(x=0.0, line_width=1)
+            cost_breakdown_fig.update_layout(
+                xaxis_title="Jährlicher Beitrag [€/a]",
+                yaxis_title="",
+                yaxis=dict(autorange="reversed"),
+                height=720,
+                margin=dict(l=20, r=20, t=20, b=45),
+                showlegend=False,
+            )
+            render_plotly(cost_breakdown_fig)
+
         if not revenue_dist_df.empty:
             with st.expander("Förderungen & Erlöse im Überblick", expanded=False):
                 relief_fig = go.Figure(
@@ -2909,173 +3077,6 @@ with tabs[5]:
                 )
                 render_plotly(soc_fig)
 
-        # ----------------------------------------------------
-        # Visualisierung
-        # ----------------------------------------------------
-        with st.expander("Visualisierung"):
-            col1, col2 = st.columns(2)
-
-            with col1:
-                st.markdown("### Dauerlinie der Auslastung")
-                duration_df = utilization_duration_curve(dispatch_df)
-                if duration_df.empty:
-                    st.info("Für die Dauerlinie sind keine gültigen Auslastungsdaten vorhanden.")
-                else:
-                    duration_fig = go.Figure(
-                        go.Scatter(
-                            x=duration_df["Stundenrang"],
-                            y=duration_df["Auslastung [%]"],
-                            mode="lines",
-                            name="Auslastung",
-                            hovertemplate=(
-                                "Stundenrang %{x:,.0f}<br>"
-                                "Auslastung %{y:.1f} %<extra></extra>"
-                            ),
-                        )
-                    )
-                    duration_fig.update_layout(
-                        xaxis_title="Stundenrang [h/a]",
-                        yaxis_title="Auslastung [%]",
-                        yaxis=dict(range=[0, 100]),
-                        height=360,
-                        margin=dict(l=20, r=20, t=20, b=20),
-                        showlegend=False,
-                    )
-                    render_plotly(duration_fig)
-
-            with col2:
-                st.markdown("### Strommix (Jahressummen)")
-                mix_df = pd.DataFrame(
-                    {
-                        "Kategorie": [
-                            "PPA verfügbar",
-                            "PPA genutzt",
-                            "§7-Bezug",
-                            "§13k-Bezug",
-                            "Spotbezug",
-                            "Spotverkauf",
-                            "PPA-Verkauf",
-                            "Abregelung",
-                            "Systemverbrauch",
-                            "Ely-Verbrauch",
-                            "Peripherie",
-                            "H₂-Verdichtung",
-                            "O₂-Verdichtung",
-                        ],
-                        "MWh/a": [
-                            dispatch_df["ppa_available_kwh"].sum() / 1000.0,
-                            dispatch_df["ppa_used_kwh"].sum() / 1000.0,
-                            dispatch_df["section7_purchase_kwh"].sum() / 1000.0,
-                            dispatch_df["section13k_purchase_kwh"].sum() / 1000.0,
-                            dispatch_df["spot_purchase_kwh"].sum() / 1000.0,
-                            dispatch_df["spot_sale_kwh"].sum() / 1000.0,
-                            dispatch_df["ppa_sale_kwh"].sum() / 1000.0,
-                            dispatch_df["curtailed_kwh"].sum() / 1000.0,
-                            dispatch_df["system_consumption_kwh"].sum() / 1000.0,
-                            dispatch_df["ely_consumption_kwh"].sum() / 1000.0,
-                            dispatch_df["peripheral_consumption_kwh"].sum() / 1000.0,
-                            dispatch_df["h2_compressor_consumption_kwh"].sum() / 1000.0,
-                            dispatch_df["oxygen_compressor_consumption_kwh"].sum() / 1000.0,
-                        ],
-                    }
-                )
-                mix_fig = go.Figure(
-                    go.Bar(
-                        x=mix_df["MWh/a"],
-                        y=mix_df["Kategorie"],
-                        orientation="h",
-                        name="Energie",
-                        hovertemplate="%{y}<br>%{x:,.0f} MWh/a<extra></extra>",
-                    )
-                )
-                mix_fig.update_layout(
-                    xaxis_title="Energie [MWh/a]",
-                    yaxis_title="",
-                    yaxis=dict(autorange="reversed"),
-                    height=430,
-                    margin=dict(l=20, r=20, t=20, b=45),
-                    showlegend=False,
-                )
-                render_plotly(mix_fig)
-
-            st.markdown("### Kostenstruktur (jährlich)")
-            cost_breakdown_df = pd.DataFrame(
-                {
-                    "Kategorie": [
-                        "Finanzierung (FK + EK)",
-                        "Stackersatz",
-                        "Wartung & Instandhaltung",
-                        "Personal",
-                        "Rückstellungen",
-                        "Wasser",
-                        "Individuelle OPEX",
-                        "Baseload-PPA",
-                        "PV-PPA",
-                        "Wind-PPA",
-                        "§7",
-                        "§13k",
-                        "Spotbezug",
-                        "Stromnebenkosten Ely",
-                        "Stromnebenkosten Rest",
-                        "Strompreisförderung",
-                        "Strompreiskompensation",
-                        "Spotverkauf (Erlös)",
-                        "PPA-Verkauf (Erlös)",
-                        "THG-Quote (Erlös)",
-                        "Sauerstoff (Erlös)",
-                        "Abwärme (Erlös)",
-                        "Regelenergie (Erlös)",
-                        "Sonstige Einnahmen 1",
-                        "Sonstige Einnahmen 2",
-                    ],
-                    "€/a": [
-                        results["financing_eur_per_year"],
-                        results["stack_replacement_eur_per_year"],
-                        results["maintenance_eur_per_year"],
-                        results["personnel_eur_per_year"],
-                        results["reserves_total_eur_per_year"],
-                        results["water_eur_per_year"],
-                        results["individual_opex_eur_per_year"],
-                        results["annual_baseload_cost_eur"],
-                        results["annual_pv_ppa_cost_eur"],
-                        results["annual_wind_ppa_cost_eur"],
-                        results["annual_section7_cost_eur"],
-                        results["annual_section13k_cost_eur"],
-                        results["annual_spot_purchase_cost_eur"],
-                        results["ely_power_addons_eur_per_year"],
-                        results["rest_power_addons_eur_per_year"],
-                        -results["electricity_subsidy_eur_per_year"],
-                        -results["spk_revenue_eur_per_year"],
-                        -results["annual_spot_sale_revenue_eur"],
-                        -results["annual_ppa_sale_revenue_eur"],
-                        -results["thg_revenue_eur_per_year"],
-                        -results["oxygen_revenue_eur_per_year"],
-                        -results["waste_heat_revenue_eur_per_year"],
-                        -results["balancing_energy_revenue_eur_per_year"],
-                        -results["other_revenue_1_eur_per_year"],
-                        -results["other_revenue_2_eur_per_year"],
-                    ],
-                }
-            )
-            cost_breakdown_fig = go.Figure(
-                go.Bar(
-                    x=cost_breakdown_df["€/a"],
-                    y=cost_breakdown_df["Kategorie"],
-                    orientation="h",
-                    name="Kosten / Erlöse",
-                    hovertemplate="%{y}<br>%{x:,.0f} €/a<extra></extra>",
-                )
-            )
-            cost_breakdown_fig.add_vline(x=0.0, line_width=1)
-            cost_breakdown_fig.update_layout(
-                xaxis_title="Jährlicher Beitrag [€/a]",
-                yaxis_title="",
-                yaxis=dict(autorange="reversed"),
-                height=720,
-                margin=dict(l=20, r=20, t=20, b=45),
-                showlegend=False,
-            )
-            render_plotly(cost_breakdown_fig)
 
         # ----------------------------------------------------
         # Vollständige Ergebnisübersicht als Tabelle
