@@ -54,6 +54,10 @@ from core.scenario import (
 
 import plotly.graph_objects as go
 
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent
+LOGO_DIR = BASE_DIR / "assets" / "logos"
+
 def de_number(value, decimals=2):
     if value is None:
         return "-"
@@ -968,6 +972,26 @@ with tabs[0]:
                 format="%.1f%%",
             )
 
+
+    logo1, logo2, logo3 = st.columns(3)
+
+    with logo1:
+        st.image(
+            str(LOGO_DIR / "HS-Logo.png"),
+            width=237,
+        )
+
+    with logo2:
+        st.image(
+            str(LOGO_DIR / "NRL-Logo.png"),
+            width=303,
+        )
+
+    with logo3:
+        st.image(
+            str(LOGO_DIR / "Foerderung.png"),
+            width=154,
+        )
 
 # ============================================================
 # Tab 2: CAPEX
