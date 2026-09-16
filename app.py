@@ -958,10 +958,14 @@ with tabs[0]:
             )
 
         with c3:
-            percent_slider(
-                "Degradation pro Jahr [%‑Punkte/a]",
+            st.slider(
+                "Degradation pro Jahr [%-Punkte/a]",
+                min_value=0.0,
+                max_value=5.0,
+                step=0.1,
                 key="degradation_per_year",
                 help=HELP["degradation_per_year"],
+                format="%.1f%%",
             )
 
 
