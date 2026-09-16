@@ -860,6 +860,7 @@ tabs = st.tabs(
         "CAPEX",
         "OPEX",
         "Strom & Zeitreihen",
+        "Einnahmen",
         "Förderungen",
         "Ergebnisse",
         "Sensitivität",
@@ -1485,111 +1486,6 @@ with tabs[2]:
             )
 
 
-    with st.expander("Weitere Einnahmen – THG-Quote", expanded=False):
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            st.checkbox("THG-Quote berücksichtigen", key="thg_enabled", help=HELP["thg_quote"])
-            st.number_input(
-                "Preis THG-Quote [€/t CO₂]", min_value=0.0, max_value=10_000.0, step=10.0,
-                key="thg_price_eur_per_tco2", disabled=not st.session_state.thg_enabled,
-                help=HELP["thg_price_eur_per_tco2"],
-                format="%.0f",
-            )
-        with c2:
-            st.slider(
-                "Anteil H₂ für Mobilitätssektor [%]", min_value=0.0, max_value=100.0, step=1.0,
-                key="mobility_share", disabled=not st.session_state.thg_enabled,
-                help=HELP["mobility_share"],
-                format="%.0f%%",
-            )
-            st.slider(
-                "Anteil an THG-Einnahmen [%]", min_value=0.0, max_value=100.0, step=1.0,
-                key="thg_revenue_share", disabled=not st.session_state.thg_enabled,
-                help=HELP["thg_revenue_share"],
-                format="%.0f%%",
-            )
-        with c3:
-            st.number_input(
-                "THG-Intensität grüner H₂ [kg CO₂/GJ]", min_value=0.0, max_value=100.0, step=0.1,
-                key="h2_thg_intensity_kgco2_per_gj", disabled=not st.session_state.thg_enabled,
-                help=HELP["h2_thg_intensity_kgco2_per_gj"],
-                format="%.1f",
-            )
-            st.slider(
-                "Preisentwicklung THG-Quote [%/a]", min_value=-20.0, max_value=30.0, step=0.1,
-                key="thg_price_escalation_per_year", disabled=not st.session_state.thg_enabled,
-                help=HELP["thg_price_escalation_per_year"],
-                format="%.1f%%",
-            )
-
-    with st.expander("Weitere Einnahmen – Regelenergie", expanded=False):
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            st.checkbox(
-                "Regelenergie berücksichtigen",
-                key="balancing_energy_enabled",
-                help=HELP.get("balancing_energy"),
-            )
-        with c2:
-            st.number_input(
-                "Kalkulierter Ertrag [€/a]",
-                min_value=0.0, max_value=1_000_000_000.0, step=10_000.0,
-                key="balancing_energy_revenue_eur_per_year",
-                disabled=not st.session_state.balancing_energy_enabled,
-                help=HELP["balancing_energy_revenue_eur_per_year"],
-                format="%.0f",
-            )
-        with c3:
-            st.slider(
-                "Jährliche Preissteigerung [%/a]", min_value=-20.0, max_value=30.0, step=0.1,
-                key="balancing_energy_escalation_per_year",
-                disabled=not st.session_state.balancing_energy_enabled,
-                help=HELP["balancing_energy_escalation_per_year"],
-                format="%.1f%%",
-            )
-        st.caption(
-            "Regelenergie wird nicht stündlich simuliert, sondern über einen extern kalkulierten Jahresertrag abgebildet."
-        )
-
-    with st.expander("Weitere Einnahmen – Sonstige", expanded=False):
-        st.checkbox(
-            "Sonstige Einnahmen berücksichtigen",
-            key="other_revenues_enabled",
-            help=HELP.get("other_revenues"),
-        )
-        c1, c2 = st.columns(2)
-        with c1:
-            st.number_input(
-                "Sonstige Einnahmen 1 [€/a]",
-                min_value=0.0, max_value=1_000_000_000.0, step=10_000.0,
-                key="other_revenue_1_eur_per_year",
-                disabled=not st.session_state.other_revenues_enabled,
-                help=HELP["other_revenue_1_eur_per_year"],
-                format="%.0f",
-            )
-            st.slider(
-                "Preisentwicklung Sonstige 1 [%/a]", min_value=-20.0, max_value=30.0, step=0.1,
-                key="other_revenue_1_escalation_per_year",
-                disabled=not st.session_state.other_revenues_enabled,
-                help=HELP["other_revenue_1_escalation_per_year"],
-                format="%.1f%%",
-            )
-        with c2:
-            st.number_input(
-                "Sonstige Einnahmen 2 [€/a]",
-                min_value=0.0, max_value=1_000_000_000.0, step=10_000.0,
-                key="other_revenue_2_eur_per_year",
-                disabled=not st.session_state.other_revenues_enabled,
-                help=HELP["other_revenue_2_eur_per_year"],
-                format="%.0f",
-            )
-            st.slider(
-                "Preisentwicklung Sonstige 2 [%/a]", min_value=-20.0, max_value=30.0, step=0.1,
-                key="other_revenue_2_escalation_per_year",
-                disabled=not st.session_state.other_revenues_enabled,
-                help=HELP["other_revenue_2_escalation_per_year"],
-                format="%.1f%%",
-            )
 
 
 # ============================================================
@@ -2399,10 +2295,124 @@ with tabs[3]:
             )
 
 # ============================================================
-# Tab 5: Förderungen & Strompreiskompensation
+# Tab 5: Einnahmen
 # ============================================================
 
 with tabs[4]:
+    st.subheader("Einnahmen")
+
+    with st.expander("THG-Quote", expanded=False):
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.checkbox("THG-Quote berücksichtigen", key="thg_enabled", help=HELP["thg_quote"])
+            st.number_input(
+                "Preis THG-Quote [€/t CO₂]", min_value=0.0, max_value=10_000.0, step=10.0,
+                key="thg_price_eur_per_tco2", disabled=not st.session_state.thg_enabled,
+                help=HELP["thg_price_eur_per_tco2"],
+                format="%.0f",
+            )
+        with c2:
+            st.slider(
+                "Anteil H₂ für Mobilitätssektor [%]", min_value=0.0, max_value=100.0, step=1.0,
+                key="mobility_share", disabled=not st.session_state.thg_enabled,
+                help=HELP["mobility_share"],
+                format="%.0f%%",
+            )
+            st.slider(
+                "Anteil an THG-Einnahmen [%]", min_value=0.0, max_value=100.0, step=1.0,
+                key="thg_revenue_share", disabled=not st.session_state.thg_enabled,
+                help=HELP["thg_revenue_share"],
+                format="%.0f%%",
+            )
+        with c3:
+            st.number_input(
+                "THG-Intensität grüner H₂ [kg CO₂/GJ]", min_value=0.0, max_value=100.0, step=0.1,
+                key="h2_thg_intensity_kgco2_per_gj", disabled=not st.session_state.thg_enabled,
+                help=HELP["h2_thg_intensity_kgco2_per_gj"],
+                format="%.1f",
+            )
+            st.slider(
+                "Preisentwicklung THG-Quote [%/a]", min_value=-20.0, max_value=30.0, step=0.1,
+                key="thg_price_escalation_per_year", disabled=not st.session_state.thg_enabled,
+                help=HELP["thg_price_escalation_per_year"],
+                format="%.1f%%",
+            )
+
+    with st.expander("Regelenergie", expanded=False):
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.checkbox(
+                "Regelenergie berücksichtigen",
+                key="balancing_energy_enabled",
+                help=HELP.get("balancing_energy"),
+            )
+        with c2:
+            st.number_input(
+                "Kalkulierter Ertrag [€/a]",
+                min_value=0.0, max_value=1_000_000_000.0, step=10_000.0,
+                key="balancing_energy_revenue_eur_per_year",
+                disabled=not st.session_state.balancing_energy_enabled,
+                help=HELP["balancing_energy_revenue_eur_per_year"],
+                format="%.0f",
+            )
+        with c3:
+            st.slider(
+                "Jährliche Preissteigerung [%/a]", min_value=-20.0, max_value=30.0, step=0.1,
+                key="balancing_energy_escalation_per_year",
+                disabled=not st.session_state.balancing_energy_enabled,
+                help=HELP["balancing_energy_escalation_per_year"],
+                format="%.1f%%",
+            )
+        st.caption(
+            "Regelenergie wird nicht stündlich simuliert, sondern über einen extern kalkulierten Jahresertrag abgebildet."
+        )
+
+    with st.expander("Sonstige", expanded=False):
+        st.checkbox(
+            "Sonstige Einnahmen berücksichtigen",
+            key="other_revenues_enabled",
+            help=HELP.get("other_revenues"),
+        )
+        c1, c2 = st.columns(2)
+        with c1:
+            st.number_input(
+                "Sonstige Einnahmen 1 [€/a]",
+                min_value=0.0, max_value=1_000_000_000.0, step=10_000.0,
+                key="other_revenue_1_eur_per_year",
+                disabled=not st.session_state.other_revenues_enabled,
+                help=HELP["other_revenue_1_eur_per_year"],
+                format="%.0f",
+            )
+            st.slider(
+                "Preisentwicklung Sonstige 1 [%/a]", min_value=-20.0, max_value=30.0, step=0.1,
+                key="other_revenue_1_escalation_per_year",
+                disabled=not st.session_state.other_revenues_enabled,
+                help=HELP["other_revenue_1_escalation_per_year"],
+                format="%.1f%%",
+            )
+        with c2:
+            st.number_input(
+                "Sonstige Einnahmen 2 [€/a]",
+                min_value=0.0, max_value=1_000_000_000.0, step=10_000.0,
+                key="other_revenue_2_eur_per_year",
+                disabled=not st.session_state.other_revenues_enabled,
+                help=HELP["other_revenue_2_eur_per_year"],
+                format="%.0f",
+            )
+            st.slider(
+                "Preisentwicklung Sonstige 2 [%/a]", min_value=-20.0, max_value=30.0, step=0.1,
+                key="other_revenue_2_escalation_per_year",
+                disabled=not st.session_state.other_revenues_enabled,
+                help=HELP["other_revenue_2_escalation_per_year"],
+                format="%.1f%%",
+            )
+
+
+# ============================================================
+# Tab 6: Förderungen & Strompreiskompensation
+# ============================================================
+
+with tabs[5]:
     st.subheader("Förderungen & Strompreiskompensation")
     st.caption(
         "Hier werden CAPEX-, OPEX- und Strompreisförderungen sowie die Strompreiskompensation berücksichtigt. "
@@ -2540,10 +2550,10 @@ with tabs[4]:
 
 
 # ============================================================
-# Tab 6: Ergebnisse
+# Tab 7: Ergebnisse
 # ============================================================
 
-with tabs[5]:
+with tabs[6]:
     st.subheader("Ergebnisse")
 
     def fmt_de(value: float, decimals: int = 2) -> str:
@@ -3170,10 +3180,10 @@ with tabs[5]:
             )
 
 # ============================================================
-# Tab 7: Sensitivität
+# Tab 8: Sensitivität
 # ============================================================
 
-with tabs[6]:
+with tabs[7]:
     st.subheader("Sensitivitätsanalyse")
     st.caption(
         "Bei der Sensitivitätsanalyse wird jeweils eine Größe variiert, während die übrigen Größen auf dem "
